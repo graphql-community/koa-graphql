@@ -32,13 +32,11 @@ export type OptionsObj = {
   pretty?: ?boolean,
 };
 
-type Middleware = Generator<>;
-
 /**
  * Middleware for express; takes an options object or function as input to
  * configure behavior, and returns an express middleware.
  */
-export default function graphqlHTTP(options: Options): Middleware {
+export default function graphqlHTTP(options: Options) {
   if (!options) {
     throw new Error('GraphQL middleware requires options.');
   }

@@ -49,7 +49,7 @@ export default function graphqlHTTP(options: Options): Middleware {
     var response = this.response;
 
     // Get GraphQL options given this request.
-    var { schema, rootValue, pretty } = getOptions(options, request);
+    var { schema, rootValue, pretty } = getOptions(options, request, this);
 
     // GraphQL HTTP only supports GET and POST methods.
     if (request.method !== 'GET' && request.method !== 'POST') {
@@ -100,8 +100,9 @@ export default function graphqlHTTP(options: Options): Middleware {
  * Get the options that the middleware was configured with, sanity
  * checking them.
  */
-function getOptions(options: Options, request: Request): OptionsObj {
-  var optionsData = typeof options === 'function' ? options(request) : options;
+function getOptions(options: Options, request: Request, context): OptionsObj {
+  var optionsData = typeof options === 'function'
+                  ? options(request, context) : options;
 
   if (!optionsData || typeof optionsData !== 'object') {
     throw new Error(

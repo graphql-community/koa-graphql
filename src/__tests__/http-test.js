@@ -8,6 +8,7 @@ import { describe, it } from 'mocha';
 import { stringify } from 'querystring';
 import zlib from 'zlib';
 import multer from 'multer';
+import multerWrapper from './helpers/koa-multer';
 import request from 'supertest-as-promised';
 import koa from 'koa';
 import mount from 'koa-mount';
@@ -452,20 +453,20 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     // should replace multer with koa middleware
-    xit('allows for pre-parsed POST bodies', async () => {
+    it('allows for pre-parsed POST bodies', async () => {
       var app = koa();
 
       // Multer provides multipart form data parsing.
       var storage = multer.memoryStorage();
-      app.use(urlString(), multer({ storage }).single('file'));
+      app.use(mount(urlString(), multerWrapper({ storage }).single('file')));
 
-      app.use(urlString(), graphqlHTTP(req => {
-        expect(req.file.originalname).to.equal('http-test.js');
+      app.use(mount(urlString(), graphqlHTTP((req, ctx) => {
+        expect(ctx.req.file.originalname).to.equal('http-test.js');
         return {
           schema: TestSchema,
-          rootObject: { request: req }
+          rootObject: { request: ctx.req }
         };
-      }));
+      })));
 
       var response = await request(app.listen())
         .post(urlString())

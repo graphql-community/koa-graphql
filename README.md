@@ -16,7 +16,7 @@ npm install --save koa-gql
 
 ## Usage
 
-```
+```js
 var koa = require('koa');
 var mount = require('koa-mount');
 var graphqlHTTP = require('koa-gql');
@@ -67,3 +67,7 @@ depending on the provided *Content-Type* header.
 
   * **`application/graphql`**: The POST body will be parsed as GraphQL
     query string, which provides the `query` parameter.
+
+
+[`graphql-js`]: https://github.com/graphql/graphql-js
+[`multer`]: https://github.com/expressjs/multer

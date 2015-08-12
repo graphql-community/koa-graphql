@@ -32,7 +32,7 @@
     "PATENTS"
   ],
   "options": {
-    "mocha": "--require resources/mocha-bootload src/**/__tests__/**/*.js"
+    "mocha": "--harmony --require resources/mocha-bootload src/**/__tests__/**/*.js"
   },
   "scripts": {
     "prepublish": ". ./scripts/prepublish.sh",

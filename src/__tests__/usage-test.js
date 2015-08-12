@@ -6,7 +6,7 @@ import { describe, it } from 'mocha';
 import { stringify } from 'querystring';
 import request from 'supertest-as-promised';
 import koa from 'koa';
-import Router from 'koa-router';
+import mount from 'koa-mount';
 import graphqlHTTP from '..';
 
 
@@ -22,7 +22,6 @@ describe('Useful errors when incorrectly used', () => {
 
   it('requires option factory function to return object', async () => {
     var app = koa();
-    var router = new Router();
 
     var error;
     app.use(function *(next) {
@@ -34,8 +33,7 @@ describe('Useful errors when incorrectly used', () => {
       this.status = 200;
     });
 
-    router.get('/graphql', graphqlHTTP(() => null));
-    app.use(router.routes());
+    app.use(mount('/graphql', graphqlHTTP(() => null)));
 
     await request(app.listen()).get('/graphql?' + stringify({ query: '{test}' }));
     expect(error.message).to.equal(
@@ -45,7 +43,6 @@ describe('Useful errors when incorrectly used', () => {
 
   it('requires option factory function to return object with schema', async () => {
     var app = koa();
-    var router = new Router();
 
     var error;
     app.use(function *(next) {
@@ -57,8 +54,7 @@ describe('Useful errors when incorrectly used', () => {
       this.status = 200;
     });
 
-    router.get('/graphql', graphqlHTTP(() => ({})));
-    app.use(router.routes());
+    app.use(mount('/graphql', graphqlHTTP(() => ({}))));
 
     await request(app.listen()).get('/graphql?' + stringify({ query: '{test}' }));
     expect(error.message).to.equal(

@@ -7,13 +7,15 @@
 
 Create a GraphQL HTTP server with [Koa](http://koajs.com/).
 
-port from [express-graphql](https://github.com/graphql/express-graphql)
+Port from [express-graphql](https://github.com/graphql/express-graphql)
 
 ## Install
 
 ```
 npm install --save koa-gql
 ```
+
+> NOTE: `koa-graphql` has been used by other developer. So use `koa-gql` instead.
 
 ## Usage
 
@@ -78,5 +80,5 @@ depending on the provided *Content-Type* header.
 [travis-url]: https://travis-ci.org/chentsulin/koa-gql
 [coveralls-image]: https://coveralls.io/repos/chentsulin/koa-gql/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/chentsulin/koa-gql?branch=master
-[david_img]: https://img.shields.io/david/chentsulin/koa-gql.svg
+[david_img]: https://david-dm.org/chentsulin/koa-gql.svg
 [david_site]: https://david-dm.org/chentsulin/koa-gql

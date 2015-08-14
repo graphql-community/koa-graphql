@@ -80,5 +80,5 @@ depending on the provided *Content-Type* header.
 [travis-url]: https://travis-ci.org/chentsulin/koa-graphql
 [coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/chentsulin/koa-graphql?branch=master
-[david_img]: https://david-dm.org/chentsulin/koa-gql.svg
-[david_site]: https://david-dm.org/chentsulin/koa-gql
+[david_img]: https://david-dm.org/chentsulin/koa-graphql.svg
+[david_site]: https://david-dm.org/chentsulin/koa-graphql

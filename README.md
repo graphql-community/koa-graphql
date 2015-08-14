@@ -76,9 +76,9 @@ depending on the provided *Content-Type* header.
 [`multer`]: https://github.com/expressjs/multer
 [npm-image]: https://img.shields.io/npm/v/koa-gql.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/koa-gql
-[travis-image]: https://travis-ci.org/chentsulin/koa-gql.svg
-[travis-url]: https://travis-ci.org/chentsulin/koa-gql
-[coveralls-image]: https://coveralls.io/repos/chentsulin/koa-gql/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/chentsulin/koa-gql?branch=master
+[travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg
+[travis-url]: https://travis-ci.org/chentsulin/koa-graphql
+[coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/chentsulin/koa-graphql?branch=master
 [david_img]: https://david-dm.org/chentsulin/koa-gql.svg
 [david_site]: https://david-dm.org/chentsulin/koa-gql

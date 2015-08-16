@@ -155,6 +155,6 @@ function getGraphQLParams(request: Request, data: Object): GraphQLParams {
 function sendError(response: Response, error: Error, pretty?: ?boolean): void {
   var errorResponse = { errors: [ formatError(error) ] };
   response.status = error.status || 500;
-  response.type = 'text/json';
+  response.type = 'application/json';
   response.body = JSON.stringify(errorResponse, null, pretty ? 2 : 0);
 }

@@ -12,17 +12,15 @@ Port from [express-graphql](https://github.com/graphql/express-graphql)
 ## Install
 
 ```
-npm install --save koa-gql
+npm install --save koa-graphql
 ```
-
-> NOTE: `koa-graphql` has been used by other developer. So use `koa-gql` instead.
 
 ## Usage
 
 ```js
 var koa = require('koa');
 var mount = require('koa-mount');
-var graphqlHTTP = require('koa-gql');
+var graphqlHTTP = require('koa-graphql');
 
 var app = koa();
 
@@ -74,8 +72,8 @@ depending on the provided *Content-Type* header.
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
 [`multer`]: https://github.com/expressjs/multer
-[npm-image]: https://img.shields.io/npm/v/koa-gql.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/koa-gql
+[npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/koa-graphql
 [travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg
 [travis-url]: https://travis-ci.org/chentsulin/koa-graphql
 [coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github

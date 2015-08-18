@@ -1,5 +1,5 @@
 {
-  "name": "koa-gql",
+  "name": "koa-graphql",
   "version": "0.1.2",
   "description": "Create a GraphQL HTTP server with Koa.",
   "contributors": [
@@ -9,11 +9,11 @@
   ],
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/chentsulin/koa-gql/issues"
+    "url": "https://github.com/chentsulin/koa-graphql/issues"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/chentsulin/koa-gql.git"
+    "url": "http://github.com/chentsulin/koa-graphql.git"
   },
   "keywords": [
     "koa",

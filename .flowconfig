@@ -3,3 +3,6 @@
 
 [libs]
 ./interfaces
+
+[version]
+0.15.0

@@ -99,8 +99,8 @@ export default function graphqlHTTP(options: Options) {
  * checking them.
  */
 function getOptions(options: Options, request: Request, context): OptionsObj {
-  var optionsData = typeof options === 'function'
-                  ? options(request, context) : options;
+  var optionsData = typeof options === 'function' ?
+                  options(request, context) : options;
 
   if (!optionsData || typeof optionsData !== 'object') {
     throw new Error(

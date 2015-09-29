@@ -8,7 +8,7 @@ node_js:
   - "4"
 
 script:
-  - npm run lint && (if [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then npm install -g babel && npm run cover:lcov; else npm run testonly; fi)
+  - npm run lint && (if [[ "$TRAVIS_JOB_NUMBER" == *.2 ]]; then npm run cover:lcov; else npm run testonly; fi)
 
 after_failure:
   - (cd resources; python travis_after_all.py)

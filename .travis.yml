@@ -6,6 +6,7 @@ node_js:
   - "2"
   - "3"
   - "4"
+  - "5"
 
 script:
   - npm run lint && (if [[ "$TRAVIS_JOB_NUMBER" == *.2 ]]; then npm run cover:lcov; else npm run testonly; fi)

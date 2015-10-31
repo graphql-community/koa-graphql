@@ -89,7 +89,7 @@ export default function graphqlHTTP(options: Options) {
     // Report 200:Success if a data key exists,
     // Otherwise 400:BadRequest if only errors exist.
     response.status = result.hasOwnProperty('data') ? 200 : 400;
-    response.type = 'text/json';
+    response.type = 'application/json';
     response.body = JSON.stringify(result, null, pretty ? 2 : 0);
   };
 }

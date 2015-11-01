@@ -62,7 +62,7 @@ export default function graphqlHTTP(options: Options) {
     // Parse the Request body.
     var data;
     try {
-      data = yield parseBody(req);
+      data = yield parseBody(req, request);
       data = data || {};
 
       // Get GraphQL params from the request and POST body data.

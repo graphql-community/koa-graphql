@@ -13,6 +13,7 @@ import request from 'supertest-as-promised';
 import koa from 'koa';
 import mount from 'koa-mount';
 import parse from 'co-body';
+import getRawBody from 'raw-body';
 
 import {
   GraphQLSchema,
@@ -527,6 +528,34 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('does not accept unknown pre-parsed POST raw Buffer', async () => {
+      var app = koa();
+      app.use(function *(next) {
+        if (this.is('*/*')) {
+          var req = this.req;
+          this.request.body = yield getRawBody(req, {
+            length: req.headers['content-length'],
+            limit: '1mb',
+            encoding: null
+          });
+          console.log(this.request.body);
+        }
+        yield next;
+      });
+
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
+
+      var req = request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql');
+      req.write(new Buffer('{ test(who: "World") }'));
+      var error = await catchError(req);
+
+      expect(error.response.status).to.equal(400);
+      expect(JSON.parse(error.response.text)).to.deep.equal({
+        errors: [ { message: 'Must provide query string.' } ]
+      });
+    });
   });
 
   describe('Pretty printing', () => {

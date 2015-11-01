@@ -59,9 +59,9 @@ the parameters:
     provided, a 400 error will be returned if the `query` contains multiple
     named operations.
 
-	* **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
-		provided raw JSON will always be returned instead of GraphiQL even when
-		loaded from a browser.
+  * **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
+    provided raw JSON will always be returned instead of GraphiQL even when
+    loaded from a browser.
 
 GraphQL will first look for each parameter in the URL's query-string:
 

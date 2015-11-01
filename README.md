@@ -69,6 +69,13 @@ depending on the provided *Content-Type* header.
   * **`application/graphql`**: The POST body will be parsed as GraphQL
     query string, which provides the `query` parameter.
 
+### Contributing
+
+Welcome pull requests!
+
+### License
+
+BSD-3-Clause
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
 [`multer`]: https://github.com/expressjs/multer

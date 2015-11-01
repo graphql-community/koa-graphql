@@ -81,7 +81,7 @@ BSD-3-Clause
 [`multer`]: https://github.com/expressjs/multer
 [npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/koa-graphql
-[travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg
+[travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg?branch=master
 [travis-url]: https://travis-ci.org/chentsulin/koa-graphql
 [coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/chentsulin/koa-graphql?branch=master

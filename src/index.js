@@ -1,8 +1,11 @@
 /* @flow */
 
 import httpError from 'http-errors';
-import { graphql } from 'graphql';
 import { formatError } from 'graphql/error';
+import { execute } from 'graphql/execution';
+import { parse, Source } from 'graphql/language';
+import { validate } from 'graphql/validation';
+import { getOperationAST } from 'graphql/utilities/getOperationAST';
 import { parseBody as originalParseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
 import Promise from 'bluebird';
@@ -92,13 +95,64 @@ export default function graphqlHTTP(options: Options) {
       }
 
       // Run GraphQL query.
-      var result = yield graphql(
-        schema,
-        query,
-        rootValue,
-        variables,
-        operationName
-      );
+      try {
+        var result = yield new Promise(resolve => {
+          var source = new Source(query, 'GraphQL request');
+          var documentAST = parse(source);
+          var validationErrors = validate(schema, documentAST);
+          if (validationErrors.length > 0) {
+            resolve({ errors: validationErrors });
+          } else {
+
+            // Only query operations are allowed on GET requests.
+            if (request.method === 'GET') {
+              // Determine if this GET request will perform a non-query.
+              var operationAST = getOperationAST(documentAST, operationName);
+              if (operationAST && operationAST.operation !== 'query') {
+                // If GraphiQL can be shown, do not perform this query, but
+                // provide it to GraphiQL so that the requester may perform it
+                // themselves if desired.
+                if (graphiql && canDisplayGraphiQL(request, data)) {
+                  response.type = 'text/html';
+                  response.body = renderGraphiQL({ query, variables });
+                  resolve({ pass: true });
+                  return;
+                }
+
+                // Otherwise, report a 405 Method Not Allowed error.
+                response.set('Allow', 'POST');
+                sendError(
+                  response,
+                  httpError(
+                    405,
+                    `Can only perform a ${operationAST.operation} operation ` +
+                    `from a POST request.`
+                  ),
+                  pretty
+                );
+                resolve({ pass: true });
+              }
+            }
+
+            // Perform the execution.
+            resolve(
+              execute(
+                schema,
+                documentAST,
+                rootValue,
+                variables,
+                operationName
+              )
+            );
+          }
+        });
+      } catch (error) {
+        result = { errors: [ error ] };
+      }
+
+      if (result.pass) {
+        return;
+      }
 
       // Format any encountered errors.
       if (result.errors) {
@@ -118,9 +172,9 @@ export default function graphqlHTTP(options: Options) {
         response.type = 'application/json';
         response.body = JSON.stringify(result, null, pretty ? 2 : 0);
       }
-    } catch (error) {
+    } catch (parseError) {
       // Format any request errors the same as GraphQL errors.
-      return sendError(response, error, pretty);
+      return sendError(response, parseError, pretty);
     }
   };
 }

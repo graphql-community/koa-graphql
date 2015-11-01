@@ -8,9 +8,9 @@ import zlib from 'zlib';
 import type { Request } from 'koa';
 
 
-export function parseBody(req: Request, next: NodeCallback): void {
+export function parseBody(req, request: Request, next: NodeCallback): void {
   try {
-    // If express has already parsed a body, use it.
+    // If express has already parsed a body as an object, use it.
     if (typeof req.body === 'object') {
       return next(null, req.body);
     }
@@ -21,6 +21,18 @@ export function parseBody(req: Request, next: NodeCallback): void {
     }
 
     var typeInfo = contentType.parse(req);
+
+    // If koa has already parsed a body as a string, and the content-type
+    // was application/graphql, parse the string body.
+    if (typeof request.body === 'string' &&
+        typeInfo.type === 'application/graphql') {
+      return next(null, graphqlParser(request.body));
+    }
+
+    // Already parsed body we didn't recognise? Parse nothing.
+    if (request.body) {
+      return next();
+    }
 
     // Use the correct body parser based on Content-Type header.
     switch (typeInfo.type) {

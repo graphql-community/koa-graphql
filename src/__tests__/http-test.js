@@ -12,6 +12,7 @@ import multerWrapper from './helpers/koa-multer';
 import request from 'supertest-as-promised';
 import koa from 'koa';
 import mount from 'koa-mount';
+import parse from 'co-body';
 
 import {
   GraphQLSchema,
@@ -477,6 +478,52 @@ describe('GraphQL-HTTP tests', () => {
         data: {
           test: 'Hello World'
         }
+      });
+    });
+
+    it('allows for pre-parsed POST using application/graphql', async () => {
+      var app = koa();
+      app.use(function *(next) {
+        if (this.is('application/graphql')) {
+          this.request.body = yield parse.text(this);
+        }
+        yield next;
+      });
+
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
+
+      var req = request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql');
+      req.write(new Buffer('{ test(who: "World") }'));
+      var response = await req;
+
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          test: 'Hello World'
+        }
+      });
+    });
+
+    it('does not accept unknown pre-parsed POST string', async () => {
+      var app = koa();
+      app.use(function *(next) {
+        if (this.is('*/*')) {
+          this.request.body = yield parse.text(this);
+        }
+        yield next;
+      });
+
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
+
+      var req = request(app.listen())
+        .post(urlString());
+      req.write(new Buffer('{ test(who: "World") }'));
+      var error = await catchError(req);
+
+      expect(error.response.status).to.equal(400);
+      expect(JSON.parse(error.response.text)).to.deep.equal({
+        errors: [ { message: 'Must provide query string.' } ]
       });
     });
 

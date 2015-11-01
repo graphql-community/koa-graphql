@@ -4,6 +4,7 @@ import httpError from 'http-errors';
 import { graphql } from 'graphql';
 import { formatError } from 'graphql/error';
 import { parseBody as originalParseBody } from './parseBody';
+import { renderGraphiQL } from './renderGraphiQL';
 import Promise from 'bluebird';
 import type { Request, Response } from 'koa';
 
@@ -30,6 +31,11 @@ export type OptionsObj = {
    * A boolean to configure whether the output should be pretty-printed.
    */
   pretty?: ?boolean,
+
+   /**
+    * A boolean to optionally enable GraphiQL mode
+    */
+  graphiql?: ?boolean,
 };
 
 /**
@@ -47,7 +53,12 @@ export default function graphqlHTTP(options: Options) {
     var response = this.response;
 
     // Get GraphQL options given this request.
-    var { schema, rootValue, pretty } = getOptions(options, request, this);
+    var {
+      schema,
+      rootValue,
+      pretty,
+      graphiql,
+    } = getOptions(options, request, this);
 
     // GraphQL HTTP only supports GET and POST methods.
     if (request.method !== 'GET' && request.method !== 'POST') {
@@ -67,30 +78,50 @@ export default function graphqlHTTP(options: Options) {
 
       // Get GraphQL params from the request and POST body data.
       var { query, variables, operationName } = getGraphQLParams(request, data);
+
+
+      // If there is no query, present an empty GraphiQL if possible, otherwise
+      // return a 400 level error.
+      if (!query) {
+        if (graphiql && canDisplayGraphiQL(request, data)) {
+          response.type = 'text/html';
+          response.body = renderGraphiQL();
+          return;
+        }
+        throw httpError(400, 'Must provide query string.');
+      }
+
+      // Run GraphQL query.
+      var result = yield graphql(
+        schema,
+        query,
+        rootValue,
+        variables,
+        operationName
+      );
+
+      // Format any encountered errors.
+      if (result.errors) {
+        result.errors = result.errors.map(formatError);
+      }
+
+      // Report 200:Success if a data key exists,
+      // Otherwise 400:BadRequest if only errors exist.
+      response.status = result.hasOwnProperty('data') ? 200 : 400;
+
+      // If allowed to show GraphiQL, present it instead of JSON.
+      if (graphiql && canDisplayGraphiQL(request, data)) {
+        response.type = 'text/html';
+        response.body = renderGraphiQL({ query, variables, result });
+      } else {
+        // Otherwise, present JSON directly.
+        response.type = 'application/json';
+        response.body = JSON.stringify(result, null, pretty ? 2 : 0);
+      }
     } catch (error) {
       // Format any request errors the same as GraphQL errors.
       return sendError(response, error, pretty);
     }
-
-    // Run GraphQL query.
-    var result = yield graphql(
-      schema,
-      query,
-      rootValue,
-      variables,
-      operationName
-    );
-
-    // Format any encountered errors.
-    if (result.errors) {
-      result.errors = result.errors.map(formatError);
-    }
-
-    // Report 200:Success if a data key exists,
-    // Otherwise 400:BadRequest if only errors exist.
-    response.status = result.hasOwnProperty('data') ? 200 : 400;
-    response.type = 'application/json';
-    response.body = JSON.stringify(result, null, pretty ? 2 : 0);
   };
 }
 
@@ -118,7 +149,7 @@ function getOptions(options: Options, request: Request, context): OptionsObj {
 }
 
 type GraphQLParams = {
-  query: string;
+  query: ?string;
   variables: ?Object;
   operationName: ?string;
 }
@@ -129,9 +160,6 @@ type GraphQLParams = {
 function getGraphQLParams(request: Request, data: Object): GraphQLParams {
   // GraphQL Query string.
   var query = request.query.query || data.query;
-  if (!query) {
-    throw httpError(400, 'Must provide query string.');
-  }
 
   // Parse the variables if needed.
   var variables = request.query.variables || data.variables;
@@ -147,6 +175,17 @@ function getGraphQLParams(request: Request, data: Object): GraphQLParams {
   var operationName = request.query.operationName || data.operationName;
 
   return { query, variables, operationName };
+}
+
+/**
+ * Helper function to determine if GraphiQL can be displayed.
+ */
+function canDisplayGraphiQL(request: Request, data: Object): boolean {
+  // If `raw` exists, GraphiQL mode is not enabled.
+  var raw = request.query.raw !== undefined || data.raw !== undefined;
+  // Allowed to show GraphiQL if not requested as raw and this request
+  // prefers HTML over JSON.
+  return !raw && request.accepts([ 'json', 'html' ]) === 'html';
 }
 
 /**

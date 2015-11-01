@@ -24,10 +24,25 @@ var graphqlHTTP = require('koa-graphql');
 
 var app = koa();
 
-app.use(mount('/graphql', graphqlHTTP({ schema: MyGraphQLSchema })));
+app.use(mount('/graphql', graphqlHTTP({ schema: MyGraphQLSchema, graphiql: true })));
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
+
+### Options
+
+The `graphqlHTTP` function accepts the following options:
+
+  * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
+    A `schema` *must* be provided.
+
+  * **`rootValue`**: A value to pass as the rootValue to the `graphql()`
+    function from [`graphql-js`][].
+
+  * **`pretty`**: If `true`, any JSON response will be pretty-printed.
+
+  * **`graphiql`**: If `true`, may present [GraphiQL][] when loaded directly
+    from a browser (a useful tool for debugging and exploration).
 
 ### HTTP Usage
 
@@ -43,6 +58,10 @@ the parameters:
     operations, this specifies which operation should be executed. If not
     provided, a 400 error will be returned if the `query` contains multiple
     named operations.
+
+	* **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
+		provided raw JSON will always be returned instead of GraphiQL even when
+		loaded from a browser.
 
 GraphQL will first look for each parameter in the URL's query-string:
 
@@ -78,6 +97,7 @@ Welcome pull requests!
 BSD-3-Clause
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
+[GraphiQL]: https://github.com/graphql/graphiql
 [`multer`]: https://github.com/expressjs/multer
 [npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/koa-graphql

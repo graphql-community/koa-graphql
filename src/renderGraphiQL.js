@@ -1,6 +1,6 @@
 /* @flow */
 
-type GraphiQLData = { query: ?string, variables: ?Object, result: Object };
+type GraphiQLData = { query: ?string, variables: ?Object, result?: Object };
 
 // Current latest version of GraphiQL.
 var GRAPHIQL_VERSION = '0.2.4';

@@ -12,6 +12,7 @@ import multerWrapper from './helpers/koa-multer';
 import request from 'supertest-as-promised';
 import koa from 'koa';
 import mount from 'koa-mount';
+import session from 'koa-session';
 import parse from 'co-body';
 import getRawBody from 'raw-body';
 
@@ -1233,6 +1234,45 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World"}}'
+      );
+    });
+  });
+
+  describe('Session support', () => {
+    it('supports koa-session', async () => {
+      var SessionAwareGraphQLSchema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'MyType',
+          fields: {
+            myField: {
+              type: GraphQLString,
+              resolve(parentValue, _, { rootValue: { session: sess } }) {
+                return sess.id;
+              }
+            }
+          }
+        })
+      });
+      var app = koa();
+      app.keys = [ 'some secret hurr' ];
+      app.use(session(app));
+      app.use(function *(next) {
+        this.session.id = 'me';
+        yield next;
+      });
+
+      app.use(mount('/graphql', graphqlHTTP((_, ctx) => ({
+        schema: SessionAwareGraphQLSchema,
+        rootValue: { session: ctx.session }
+      }))));
+
+      var response = await request(app.listen())
+        .get(urlString({
+          query: '{myField}'
+        }));
+
+      expect(response.text).to.equal(
+        '{"data":{"myField":"me"}}'
       );
     });
   });

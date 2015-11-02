@@ -88,6 +88,51 @@ depending on the provided *Content-Type* header.
   * **`application/graphql`**: The POST body will be parsed as GraphQL
     query string, which provides the `query` parameter.
 
+### Advanced Options
+
+In order to support advanced scenarios such as installing a GraphQL server on a
+dynamic endpoint or accessing the current authentication information,
+koa-graphql allows options to be provided as a function of each
+koa request.
+
+This example uses [`koa-session`][] to run GraphQL on a rootValue based on
+the currently logged-in session.
+
+```js
+var session = require('koa-session');
+var graphqlHTTP = require('koa-graphql');
+
+var app = koa();
+app.keys = [ 'some secret hurr' ];
+app.use(session(app));
+app.use(function *(next) {
+  this.session.id = 'me';
+  yield next;
+});
+
+app.use(mount('/graphql', graphqlHTTP((request, context) => ({
+  schema: MySessionAwareGraphQLSchema,
+  rootValue: { session: context.session },
+  graphiql: true
+}))));
+```
+
+Then in your type definitions, access `session` from the rootValue:
+
+```js
+new GraphQLObjectType({
+  name: 'MyType',
+  fields: {
+    myField: {
+      type: GraphQLString,
+      resolve(parentValue, _, { rootValue: { session } }) {
+        // use `session` here
+      }
+    }
+  }
+});
+```
+
 ### Contributing
 
 Welcome pull requests!
@@ -99,6 +144,7 @@ BSD-3-Clause
 [`graphql-js`]: https://github.com/graphql/graphql-js
 [GraphiQL]: https://github.com/graphql/graphiql
 [`multer`]: https://github.com/expressjs/multer
+[`koa-session`]: https://github.com/koajs/session
 [npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/koa-graphql
 [travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg?branch=master

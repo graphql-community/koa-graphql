@@ -1,12 +1,10 @@
 language: node_js
 
 node_js:
-  - "0.12"
-  - "1"
-  - "2"
-  - "3"
+  - "stable"
   - "4"
-  - "5"
+  - "iojs"
+  - "0.12"
 
 script:
   - npm run lint && (if [[ "$TRAVIS_JOB_NUMBER" == *.2 ]]; then npm run cover:lcov; else npm run testonly; fi)

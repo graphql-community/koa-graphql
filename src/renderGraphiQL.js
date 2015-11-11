@@ -3,7 +3,7 @@
 type GraphiQLData = { query: ?string, variables: ?Object, result?: Object };
 
 // Current latest version of GraphiQL.
-var GRAPHIQL_VERSION = '0.ˋ.1';
+var GRAPHIQL_VERSION = '0.4.2';
 
 /**
  * When express-graphql receives a request which does not Accept JSON, but does

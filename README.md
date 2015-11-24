@@ -133,6 +133,11 @@ new GraphQLObjectType({
 });
 ```
 
+### Examples
+
+- [koa-graphql-relay-example](https://github.com/chentsulin/koa-graphql-relay-example)
+- [tests](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js)
+
 ### Contributing
 
 Welcome pull requests!

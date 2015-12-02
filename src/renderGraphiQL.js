@@ -3,7 +3,7 @@
 type GraphiQLData = { query: ?string, variables: ?Object, result?: Object };
 
 // Current latest version of GraphiQL.
-var GRAPHIQL_VERSION = '0.4.2';
+var GRAPHIQL_VERSION = '0.4.4';
 
 /**
  * When express-graphql receives a request which does not Accept JSON, but does
@@ -71,11 +71,14 @@ add "&raw" to the end of the URL within a browser.
     function graphQLFetcher(graphQLParams) {
       return fetch(fetchURL, {
         method: 'post',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(graphQLParams),
         credentials: 'include',
       }).then(function (response) {
-        return response.json()
+        return response.json();
       });
     }
     // When the query and variables string is edited, update the URL bar so

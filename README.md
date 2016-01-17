@@ -46,7 +46,7 @@ The `graphqlHTTP` function accepts the following options:
 
 ### HTTP Usage
 
-Once installed at a path, `express-graphql` will accept requests with
+Once installed at a path, `koa-graphql` will accept requests with
 the parameters:
 
   * **`query`**: A string GraphQL document to be executed.

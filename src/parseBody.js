@@ -15,6 +15,10 @@ export function parseBody(req, request: Request, next: NodeCallback): void {
       return next(null, req.body);
     }
 
+    if (typeof request.body === 'object' && !(request.body instanceof Buffer)) {
+      return next(null, request.body);
+    }
+
     // Skip requests without content types.
     if (req.headers['content-type'] === undefined) {
       return next();

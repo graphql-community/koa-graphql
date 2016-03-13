@@ -815,8 +815,7 @@ describe('GraphQL-HTTP tests', () => {
       var app = koa();
 
       app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        pretty: true
+        schema: TestSchema
       })));
 
       var response = await request(app.listen())
@@ -834,12 +833,65 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('allows for custom error formatting to sanitize', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        formatError(error) {
+          return { message: 'Custom error format: ' + error.message };
+        }
+      })));
+
+      var response = await request(app.listen())
+        .get(urlString({
+          query: '{thrower}',
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: null,
+        errors: [ {
+          message: 'Custom error format: Throws!',
+        } ]
+      });
+    });
+
+    it('allows for custom error formatting to elaborate', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        formatError(error) {
+          return {
+            message: error.message,
+            locations: error.locations,
+            stack: 'Stack trace'
+          };
+        }
+      })));
+
+      var response = await request(app.listen())
+        .get(urlString({
+          query: '{thrower}',
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: null,
+        errors: [ {
+          message: 'Throws!',
+          locations: [ { line: 1, column: 2 } ],
+          stack: 'Stack trace',
+        } ]
+      });
+    });
+
     it('handles syntax errors caught by GraphQL', async () => {
       var app = koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-        pretty: true
       })));
 
       var error = await catchError(
@@ -864,7 +916,6 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-        pretty: true
       })));
 
       var error = await catchError(
@@ -882,7 +933,6 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-        pretty: true
       })));
 
       var error = await catchError(
@@ -903,7 +953,6 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-        pretty: true
       })));
 
       var error = await catchError(

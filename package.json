@@ -65,7 +65,7 @@
     "coveralls": "^2.11.3",
     "eslint": "^1.1.0",
     "eslint-plugin-babel": "^2.1.1",
-    "flow-bin": "^0.18.1",
+    "flow-bin": "^0.21.0",
     "graphql": "0.4.15",
     "isparta": "^3.0.3",
     "koa": "^1.0.0",

@@ -181,7 +181,7 @@ export default function graphqlHTTP(options: Options) {
     } else {
       // Otherwise, present JSON directly.
       response.type = 'application/json';
-      response.body = JSON.stringify(result || {}, null, pretty ? 2 : 0);
+      response.body = JSON.stringify(result, null, pretty ? 2 : 0);
     }
   };
 }

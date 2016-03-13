@@ -1,17 +1,23 @@
 /* @flow */
 
+import {
+  Source,
+  parse,
+  validate,
+  execute,
+  formatError,
+  getOperationAST
+} from 'graphql';
 import httpError from 'http-errors';
-import { formatError } from 'graphql/error';
-import { execute } from 'graphql/execution';
-import { parse, Source } from 'graphql/language';
-import { validate } from 'graphql/validation';
-import { getOperationAST } from 'graphql/utilities/getOperationAST';
+
 import { parseBody as _parseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
 import Promise from 'bluebird';
+
 import type { Request } from 'koa';
 
 const parseBody = Promise.promisify(_parseBody);
+
 
 /**
  * Used to configure the graphQLHTTP middleware by providing a schema

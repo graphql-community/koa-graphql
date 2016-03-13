@@ -138,6 +138,10 @@ new GraphQLObjectType({
 - [koa-graphql-relay-example](https://github.com/chentsulin/koa-graphql-relay-example)
 - [tests](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js)
 
+### Other relevant projects
+
+Please checkout [awesome-graphql](https://github.com/chentsulin/awesome-graphql).
+
 ### Contributing
 
 Welcome pull requests!

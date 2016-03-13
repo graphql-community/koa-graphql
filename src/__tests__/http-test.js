@@ -205,11 +205,11 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(error.response.text)).to.deep.equal({
         errors: [
           {
-            message: 'Cannot query field "unknownOne" on type "QueryRoot".',
+            message: 'Cannot query field "unknownOne" on "QueryRoot".',
             locations: [ { line: 1, column: 9 } ]
           },
           {
-            message: 'Cannot query field "unknownTwo" on type "QueryRoot".',
+            message: 'Cannot query field "unknownTwo" on "QueryRoot".',
             locations: [ { line: 1, column: 21 } ]
           }
         ]
@@ -1277,4 +1277,3 @@ describe('GraphQL-HTTP tests', () => {
     });
   });
 });
-

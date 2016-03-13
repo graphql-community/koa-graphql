@@ -3,7 +3,6 @@
 
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { stringify } from 'querystring';
 import request from 'supertest-as-promised';
 import koa from 'koa';
 import mount from 'koa-mount';
@@ -23,43 +22,41 @@ describe('Useful errors when incorrectly used', () => {
   it('requires option factory function to return object', async () => {
     var app = koa();
 
-    var error;
-    app.use(function *(next) {
-      try {
-        yield next;
-      } catch (err) {
-        error = err;
-      }
-      this.status = 200;
-    });
-
     app.use(mount('/graphql', graphqlHTTP(() => null)));
 
-    await request(app.listen()).get('/graphql?' + stringify({ query: '{test}' }));
-    expect(error.message).to.equal(
-      'GraphQL middleware option function must return an options object.'
-    );
+    var caughtError;
+    try {
+      await request(app.listen()).get('/graphql?query={test}');
+    } catch (error) {
+      caughtError = error;
+    }
+    expect(caughtError.response.status).to.equal(500);
+    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+      errors: [
+        { message:
+          'GraphQL middleware option function must return an options object.' }
+      ]
+    });
   });
 
   it('requires option factory function to return object with schema', async () => {
     var app = koa();
 
-    var error;
-    app.use(function *(next) {
-      try {
-        yield next;
-      } catch (err) {
-        error = err;
-      }
-      this.status = 200;
-    });
-
     app.use(mount('/graphql', graphqlHTTP(() => ({}))));
 
-    await request(app.listen()).get('/graphql?' + stringify({ query: '{test}' }));
-    expect(error.message).to.equal(
-      'GraphQL middleware options must contain a schema.'
-    );
+    var caughtError;
+    try {
+      await request(app.listen()).get('/graphql?query={test}');
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError.response.status).to.equal(500);
+    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+      errors: [
+        { message: 'GraphQL middleware options must contain a schema.' }
+      ]
+    });
   });
 
 });

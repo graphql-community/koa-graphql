@@ -6,13 +6,12 @@ import { execute } from 'graphql/execution';
 import { parse, Source } from 'graphql/language';
 import { validate } from 'graphql/validation';
 import { getOperationAST } from 'graphql/utilities/getOperationAST';
-import { parseBody as originalParseBody } from './parseBody';
+import { parseBody as _parseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
 import Promise from 'bluebird';
-import type { Request, Response } from 'koa';
+import type { Request } from 'koa';
 
-var parseBody = Promise.promisify(originalParseBody);
-
+const parseBody = Promise.promisify(_parseBody);
 
 /**
  * Used to configure the graphQLHTTP middleware by providing a schema
@@ -51,130 +50,138 @@ export default function graphqlHTTP(options: Options) {
   }
 
   return function *middleware() {
-    var req = this.req;
-    var request = this.request;
-    var response = this.response;
+    const req = this.req;
+    const request = this.request;
+    const response = this.response;
 
-    // Get GraphQL options given this request.
-    var {
-      schema,
-      rootValue,
-      pretty,
-      graphiql,
-    } = getOptions(options, request, this);
+    // Higher scoped variables are referred to at various stages in the
+    // asyncronous state machine below.
+    let schema;
+    let rootValue;
+    let pretty;
+    let graphiql;
+    let showGraphiQL;
+    let query;
+    let variables;
+    let operationName;
 
-    // GraphQL HTTP only supports GET and POST methods.
-    if (request.method !== 'GET' && request.method !== 'POST') {
-      response.set('Allow', 'GET, POST');
-      return sendError(
-        response,
-        httpError(405, 'GraphQL only supports GET and POST requests.'),
-        pretty
-      );
-    }
+    let result;
 
-    // Parse the Request body.
-    var data;
     try {
-      data = yield parseBody(req, request);
+      // Get GraphQL options given this request.
+      const optionsObj = getOptions(options, request, this);
+      schema = optionsObj.schema;
+      rootValue = optionsObj.rootValue;
+      pretty = optionsObj.pretty;
+      graphiql = optionsObj.graphiql;
+
+      // GraphQL HTTP only supports GET and POST methods.
+      if (request.method !== 'GET' && request.method !== 'POST') {
+        response.set('Allow', 'GET, POST');
+        throw httpError(405, 'GraphQL only supports GET and POST requests.');
+      }
+
+      // Parse the Request body.
+      let data = yield parseBody(req, request);
       data = data || {};
 
-      // Get GraphQL params from the request and POST body data.
-      var { query, variables, operationName } = getGraphQLParams(request, data);
+      // Use promises as a mechanism for capturing any thrown errors during the
+      // asyncronous process.
+      result = yield new Promise(resolve => {
+        showGraphiQL = graphiql && canDisplayGraphiQL(request, data);
 
+        // Get GraphQL params from the request and POST body data.
+        const params = getGraphQLParams(request, data);
+        query = params.query;
+        variables = params.variables;
+        operationName = params.operationName;
 
-      // If there is no query, present an empty GraphiQL if possible, otherwise
-      // return a 400 level error.
-      if (!query) {
-        if (graphiql && canDisplayGraphiQL(request, data)) {
-          response.type = 'text/html';
-          response.body = renderGraphiQL();
-          return;
+        // If there is no query, but GraphiQL will be displayed, do not produce
+        // a result, otherwise return a 400: Bad Request.
+        if (!query) {
+          if (showGraphiQL) {
+            resolve(null);
+          }
+          throw httpError(400, 'Must provide query string.');
         }
-        throw httpError(400, 'Must provide query string.');
-      }
 
-      // Run GraphQL query.
-      try {
-        var result = yield new Promise(resolve => {
-          var source = new Source(query, 'GraphQL request');
-          var documentAST = parse(source);
-          var validationErrors = validate(schema, documentAST);
-          if (validationErrors.length > 0) {
-            resolve({ errors: validationErrors });
-          } else {
+        // GraphQL source.
+        const source = new Source(query, 'GraphQL request');
 
-            // Only query operations are allowed on GET requests.
-            if (request.method === 'GET') {
-              // Determine if this GET request will perform a non-query.
-              var operationAST = getOperationAST(documentAST, operationName);
-              if (operationAST && operationAST.operation !== 'query') {
-                // If GraphiQL can be shown, do not perform this query, but
-                // provide it to GraphiQL so that the requester may perform it
-                // themselves if desired.
-                if (graphiql && canDisplayGraphiQL(request, data)) {
-                  response.type = 'text/html';
-                  response.body = renderGraphiQL({ query, variables });
-                  resolve({ pass: true });
-                  return;
-                }
+        // Parse source to AST, reporting any syntax error.
+        let documentAST;
+        try {
+          documentAST = parse(source);
+        } catch (syntaxError) {
+          // Return 400: Bad Request if any syntax errors errors exist.
+          response.status = 400;
+          resolve({ errors: [ syntaxError ] });
+        }
 
-                // Otherwise, report a 405 Method Not Allowed error.
-                response.set('Allow', 'POST');
-                sendError(
-                  response,
-                  httpError(
-                    405,
-                    `Can only perform a ${operationAST.operation} operation ` +
-                    `from a POST request.`
-                  ),
-                  pretty
-                );
-                resolve({ pass: true });
-              }
+        // Validate AST, reporting any errors.
+        const validationErrors = validate(schema, documentAST);
+        if (validationErrors.length > 0) {
+          // Return 400: Bad Request if any validation errors exist.
+          response.status = 400;
+          resolve({ errors: validationErrors });
+        }
+
+        // Only query operations are allowed on GET requests.
+        if (request.method === 'GET') {
+          // Determine if this GET request will perform a non-query.
+          const operationAST = getOperationAST(documentAST, operationName);
+          if (operationAST && operationAST.operation !== 'query') {
+            // If GraphiQL can be shown, do not perform this query, but
+            // provide it to GraphiQL so that the requester may perform it
+            // themselves if desired.
+            if (showGraphiQL) {
+              resolve(null);
             }
 
-            // Perform the execution.
-            resolve(
-              execute(
-                schema,
-                documentAST,
-                rootValue,
-                variables,
-                operationName
-              )
+            // Otherwise, report a 405: Method Not Allowed error.
+            response.set('Allow', 'POST');
+            throw httpError(
+              405,
+              `Can only perform a ${operationAST.operation} operation ` +
+              `from a POST request.`
             );
           }
-        });
-      } catch (error) {
-        result = { errors: [ error ] };
-      }
+        }
 
-      if (result.pass) {
-        return;
-      }
+        // Perform the execution, reporting any errors creating the context.
+        try {
+          resolve(execute(
+            schema,
+            documentAST,
+            rootValue,
+            variables,
+            operationName
+          ));
+        } catch (contextError) {
+          // Return 400: Bad Request if any execution context errors exist.
+          response.status = 400;
+          resolve({ errors: [ contextError ] });
+        }
+      });
+    } catch (error) {
+      // If an error was caught, report the httpError status, or 500.
+      response.status = error.status || 500;
+      result = { errors: [ error ] };
+    }
 
-      // Format any encountered errors.
-      if (result.errors) {
-        result.errors = result.errors.map(formatError);
-      }
+    // Format any encountered errors.
+    if (result && result.errors) {
+      result.errors = result.errors.map(formatError);
+    }
 
-      // Report 200:Success if a data key exists,
-      // Otherwise 400:BadRequest if only errors exist.
-      response.status = result.hasOwnProperty('data') ? 200 : 400;
-
-      // If allowed to show GraphiQL, present it instead of JSON.
-      if (graphiql && canDisplayGraphiQL(request, data)) {
-        response.type = 'text/html';
-        response.body = renderGraphiQL({ query, variables, result });
-      } else {
-        // Otherwise, present JSON directly.
-        response.type = 'application/json';
-        response.body = JSON.stringify(result, null, pretty ? 2 : 0);
-      }
-    } catch (parseError) {
-      // Format any request errors the same as GraphQL errors.
-      return sendError(response, parseError, pretty);
+    // If allowed to show GraphiQL, present it instead of JSON.
+    if (showGraphiQL) {
+      response.type = 'text/html';
+      response.body = renderGraphiQL({ query, variables , result });
+    } else {
+      // Otherwise, present JSON directly.
+      response.type = 'application/json';
+      response.body = JSON.stringify(result || {}, null, pretty ? 2 : 0);
     }
   };
 }
@@ -240,14 +247,4 @@ function canDisplayGraphiQL(request: Request, data: Object): boolean {
   // Allowed to show GraphiQL if not requested as raw and this request
   // prefers HTML over JSON.
   return !raw && request.accepts([ 'json', 'html' ]) === 'html';
-}
-
-/**
- * Helper for formatting errors
- */
-function sendError(response: Response, error: Error, pretty?: ?boolean): void {
-  var errorResponse = { errors: [ formatError(error) ] };
-  response.status = error.status || 500;
-  response.type = 'application/json';
-  response.body = JSON.stringify(errorResponse, null, pretty ? 2 : 0);
 }

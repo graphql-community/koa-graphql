@@ -13,11 +13,11 @@ import httpError from 'http-errors';
 
 import { parseBody as _parseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
-import Promise from 'bluebird';
+import thenify from 'thenify';
 
 import type { Request } from 'koa';
 
-const parseBody = Promise.promisify(_parseBody);
+const parseBody = thenify(_parseBody);
 
 
 /**

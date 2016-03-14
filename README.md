@@ -121,6 +121,8 @@ This example uses [`koa-session`][] to run GraphQL on a rootValue based on
 the currently logged-in session.
 
 ```js
+var koa = require('koa');
+var mount = require('koa-mount');
 var session = require('koa-session');
 var graphqlHTTP = require('koa-graphql');
 

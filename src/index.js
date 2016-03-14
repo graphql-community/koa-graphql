@@ -6,7 +6,8 @@ import {
   validate,
   execute,
   formatError,
-  getOperationAST
+  getOperationAST,
+  specifiedRules
 } from 'graphql';
 import httpError from 'http-errors';
 
@@ -48,6 +49,12 @@ export type OptionsObj = {
   formatError?: ?Function,
 
   /**
+   * An optional array of validation rules that will be applied on the document
+   * in aditional to the rules in the GraphQL spec.
+   */
+  validationRules?: ?Array<any>,
+
+  /**
    * A boolean to optionally enable GraphiQL mode.
    */
   graphiql?: ?boolean,
@@ -78,6 +85,7 @@ export default function graphqlHTTP(options: Options) {
     let query;
     let variables;
     let operationName;
+    let validationRules;
 
     let result;
 
@@ -89,6 +97,11 @@ export default function graphqlHTTP(options: Options) {
       pretty = optionsObj.pretty;
       graphiql = optionsObj.graphiql;
       formatErrorFn = optionsObj.formatError;
+
+      validationRules = specifiedRules;
+      if (optionsObj.validationRules) {
+        validationRules = validationRules.concat(optionsObj.validationRules);
+      }
 
       // GraphQL HTTP only supports GET and POST methods.
       if (request.method !== 'GET' && request.method !== 'POST') {
@@ -134,7 +147,7 @@ export default function graphqlHTTP(options: Options) {
         }
 
         // Validate AST, reporting any errors.
-        const validationErrors = validate(schema, documentAST);
+        const validationErrors = validate(schema, documentAST, validationRules);
         if (validationErrors.length > 0) {
           // Return 400: Bad Request if any validation errors exist.
           response.status = 400;

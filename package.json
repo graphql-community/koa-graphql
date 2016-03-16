@@ -35,7 +35,7 @@
     "mocha": "--harmony --require resources/mocha-bootload src/**/__tests__/**/*.js"
   },
   "scripts": {
-    "prepublish": ". ./scripts/prepublish.sh",
+    "prepublish": ". ./resources/prepublish.sh",
     "test": "npm run lint && npm run testonly",
     "testonly": "mocha $npm_package_options_mocha",
     "lint": "eslint src",
@@ -65,7 +65,7 @@
     "coveralls": "^2.11.3",
     "eslint": "^1.1.0",
     "eslint-plugin-babel": "^2.1.1",
-    "flow-bin": "^0.21.0",
+    "flow-bin": "^0.22.1",
     "graphql": "0.4.16",
     "isparta": "^3.0.3",
     "koa": "^1.0.0",

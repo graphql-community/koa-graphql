@@ -2,7 +2,4 @@
 .*/node_modules/flow-bin/.*
 
 [libs]
-./interfaces
-
-[version]
-0.15.0
+./resources/interfaces

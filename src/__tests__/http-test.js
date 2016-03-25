@@ -1151,6 +1151,45 @@ describe('GraphQL-HTTP tests', () => {
       );
     });
 
+    it('escapes HTML in queries within GraphiQL', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        graphiql: true
+      })));
+
+      var error = await catchError(
+        request(app.listen())
+          .get(urlString({ query: '</script><script>alert(1)</script>' }))
+          .set('Accept', 'text/html')
+      );
+
+      expect(error.response.status).to.equal(400);
+      expect(error.response.type).to.equal('text/html');
+      expect(error.response.text).to.not.include('</script><script>alert(1)</script>');
+    });
+
+    it('escapes HTML in variables within GraphiQL', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        graphiql: true
+      })));
+
+      var response = await request(app.listen()).get(urlString({
+        query: 'query helloWho($who: String) { test(who: $who) }',
+        variables: JSON.stringify({
+          who: '</script><script>alert(1)</script>'
+        })
+      })) .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(200);
+      expect(response.type).to.equal('text/html');
+      expect(response.text).to.not.include('</script><script>alert(1)</script>');
+    });
+
     it('GraphiQL renders provided variables', async () => {
       var app = koa();
 

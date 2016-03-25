@@ -5,6 +5,11 @@ type GraphiQLData = { query: ?string, variables: ?Object, result?: Object };
 // Current latest version of GraphiQL.
 const GRAPHIQL_VERSION = '0.6.0';
 
+// Ensures string values are save to be used within a <script> tag.
+function safeSerialize(data) {
+  return data ? JSON.stringify(data).replace(/\//g, '\\/') : null;
+}
+
 /**
  * When express-graphql receives a request which does not Accept JSON, but does
  * Accept HTML, it may present GraphiQL, the in-browser GraphQL explorer IDE.
@@ -114,9 +119,9 @@ add "&raw" to the end of the URL within a browser.
         fetcher: graphQLFetcher,
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
-        query: ${JSON.stringify(queryString)},
-        response: ${JSON.stringify(resultString)},
-        variables: ${JSON.stringify(variablesString)}
+        query: ${safeSerialize(queryString)},
+        response: ${safeSerialize(resultString)},
+        variables: ${safeSerialize(variablesString)}
       }),
       document.body
     );

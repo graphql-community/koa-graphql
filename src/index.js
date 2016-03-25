@@ -205,7 +205,9 @@ export default function graphqlHTTP(options: Options) {
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
       response.type = 'text/html';
-      response.body = renderGraphiQL({ query, variables , result });
+      response.body = renderGraphiQL({
+        query, variables, operationName, result
+      });
     } else {
       // Otherwise, present JSON directly.
       response.type = 'application/json';

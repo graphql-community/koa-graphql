@@ -1,6 +1,11 @@
 /* @flow */
 
-type GraphiQLData = { query: ?string, variables: ?Object, result?: Object };
+type GraphiQLData = {
+  query: ?string,
+  variables: ?Object,
+  operationName: ?string,
+  result?: Object
+};
 
 // Current latest version of GraphiQL.
 const GRAPHIQL_VERSION = '0.6.5';
@@ -23,6 +28,7 @@ export function renderGraphiQL(data: GraphiQLData): string {
     data.variables ? JSON.stringify(data.variables, null, 2) : null;
   const resultString =
     data.result ? JSON.stringify(data.result, null, 2) : null;
+  const operationName = data.operationName;
 
   /* eslint-disable max-len */
   return `<!--
@@ -100,28 +106,39 @@ add "&raw" to the end of the URL within a browser.
         }
       });
     }
+
     // When the query and variables string is edited, update the URL bar so
     // that it can be easily shared.
     function onEditQuery(newQuery) {
       parameters.query = newQuery;
       updateURL();
     }
+
     function onEditVariables(newVariables) {
       parameters.variables = newVariables;
       updateURL();
     }
+
+    function onEditOperationName(newOperationName) {
+      parameters.operationName = newOperationName;
+      updateURL();
+    }
+
     function updateURL() {
       history.replaceState(null, null, locationQuery(parameters));
     }
+
     // Render <GraphiQL /> into the body.
     React.render(
       React.createElement(GraphiQL, {
         fetcher: graphQLFetcher,
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
+        onEditOperationName: onEditOperationName,
         query: ${safeSerialize(queryString)},
         response: ${safeSerialize(resultString)},
-        variables: ${safeSerialize(variablesString)}
+        variables: ${safeSerialize(variablesString)},
+        operationName: ${safeSerialize(operationName)},
       }),
       document.body
     );

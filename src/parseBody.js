@@ -9,7 +9,11 @@ import zlib from 'zlib';
 import type { Request } from 'koa';
 
 
-export function parseBody(req, request: Request, next: NodeCallback): void {
+export function parseBody(
+  req: http$IncomingMessage,
+  request: Request,
+  next: NodeCallback
+): void {
   try {
     // If koa has already parsed a body as a keyed object, use it.
     if (typeof req.body === 'object' && !(req.body instanceof Buffer)) {

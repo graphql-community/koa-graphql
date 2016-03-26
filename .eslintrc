@@ -210,5 +210,9 @@
     "wrap-iife": 2,
     "wrap-regex": 0,
     "yoda": [2, "never", {"exceptRange": true}]
+  },
+  globals: {
+    Generator: true,
+    http$IncomingMessage: true
   }
 }

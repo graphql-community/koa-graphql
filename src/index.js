@@ -15,7 +15,7 @@ import { parseBody as _parseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
 import thenify from 'thenify';
 
-import type { Request } from 'koa';
+import type { Context, Request } from 'koa';
 
 const parseBody = thenify(_parseBody);
 
@@ -24,7 +24,7 @@ const parseBody = thenify(_parseBody);
  * Used to configure the graphQLHTTP middleware by providing a schema
  * and other configuration options.
  */
-export type Options = ((req: Request) => OptionsObj) | OptionsObj
+export type Options = ((req: Request, ctx: Context) => OptionsObj) | OptionsObj
 export type OptionsObj = {
   /**
    * A GraphQL schema from graphql-js.
@@ -60,11 +60,13 @@ export type OptionsObj = {
   graphiql?: ?boolean,
 };
 
+type Middleware = () => Generator<Promise, void, void>;
+
 /**
  * Middleware for express; takes an options object or function as input to
  * configure behavior, and returns an express middleware.
  */
-export default function graphqlHTTP(options: Options) {
+export default function graphqlHTTP(options: Options) : Middleware {
   if (!options) {
     throw new Error('GraphQL middleware requires options.');
   }
@@ -111,11 +113,11 @@ export default function graphqlHTTP(options: Options) {
 
       // Parse the Request body.
       let data = yield parseBody(req, request);
-      data = data || {};
 
       // Use promises as a mechanism for capturing any thrown errors during the
       // asyncronous process.
       result = yield new Promise(resolve => {
+        data = data || {};
         showGraphiQL = graphiql && canDisplayGraphiQL(request, data);
 
         // Get GraphQL params from the request and POST body data.

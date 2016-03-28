@@ -222,7 +222,11 @@ export default function graphqlHTTP(options: Options) : Middleware {
  * Get the options that the middleware was configured with, sanity
  * checking them.
  */
-function getOptions(options: Options, request: Request, context): OptionsObj {
+function getOptions(
+  options: Options,
+  request: Request,
+  context: Context
+): OptionsObj {
   var optionsData = typeof options === 'function' ?
                   options(request, context) : options;
 

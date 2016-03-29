@@ -19,12 +19,25 @@ npm install --save koa-graphql
 
 ```js
 var koa = require('koa');
-var mount = require('koa-mount');
+var mount = require('koa-mount'); // koa-mount@1.x
 var graphqlHTTP = require('koa-graphql');
 
 var app = koa();
 
 app.use(mount('/graphql', graphqlHTTP({ schema: MyGraphQLSchema, graphiql: true })));
+```
+
+For Koa 2, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
+
+```js
+var koa = require('koa');
+var mount = require('koa-mount'); // koa-mount@2.x
+var convert = require('koa-convert');
+var graphqlHTTP = require('koa-graphql');
+
+var app = new Koa();
+
+app.use(mount('/graphql', convert(graphqlHTTP({ schema: MyGraphQLSchema, graphiql: true }))));
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.

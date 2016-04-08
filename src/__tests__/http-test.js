@@ -41,6 +41,10 @@ var QueryRootType = new GraphQLObjectType({
     thrower: {
       type: new GraphQLNonNull(GraphQLString),
       resolve: () => { throw new Error('Throws!'); }
+    },
+    context: {
+      type: GraphQLString,
+      resolve: (obj, args, context) => context
     }
   }
 });
@@ -303,6 +307,31 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           test: 'Hello World'
+        }
+      });
+    });
+
+
+    it('Allows passing in a context', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        context: 'testValue'
+      })));
+
+      var response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestQuery',
+          query: `
+            query TestQuery { context }
+          `
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          context: 'testValue'
         }
       });
     });
@@ -1401,7 +1430,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             myField: {
               type: GraphQLString,
-              resolve(parentValue, _, { rootValue: { session: sess } }) {
+              resolve(parentValue, _, { session: sess }) {
                 return sess.id;
               }
             }
@@ -1418,7 +1447,7 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount('/graphql', graphqlHTTP((_, ctx) => ({
         schema: SessionAwareGraphQLSchema,
-        rootValue: { session: ctx.session }
+        context: { session: ctx.session }
       }))));
 
       var response = await request(app.listen())

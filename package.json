@@ -52,9 +52,6 @@
     "raw-body": "^2.1.2",
     "thenify": "^3.2.0"
   },
-  "peerDependencies": {
-    "graphql": "^0.4.16"
-  },
   "devDependencies": {
     "babel": "^5.8.21",
     "babel-core": "^5.8.22",
@@ -66,7 +63,7 @@
     "eslint": "^1.1.0",
     "eslint-plugin-babel": "^2.1.1",
     "flow-bin": "^0.22.1",
-    "graphql": "0.4.16",
+    "graphql": "0.5.0",
     "isparta": "^3.0.3",
     "koa": "^1.0.0",
     "koa-mount": "^1.3.0",
@@ -76,5 +73,8 @@
     "sane": "^1.1.3",
     "supertest": "1.0.1",
     "supertest-as-promised": "^2.0.2"
+  },
+  "peerDependencies": {
+    "graphql": "^0.5.0"
   }
 }

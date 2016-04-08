@@ -32,6 +32,11 @@ export type OptionsObj = {
   schema: Object,
 
   /**
+   * A value to pass as the context to the graphql() function.
+   */
+  context?: ?mixed,
+
+  /**
    * An object to pass as the rootValue to the graphql() function.
    */
   rootValue?: ?Object,
@@ -79,6 +84,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
     // Higher scoped variables are referred to at various stages in the
     // asyncronous state machine below.
     let schema;
+    let context;
     let rootValue;
     let pretty;
     let graphiql;
@@ -95,6 +101,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
       // Get GraphQL options given this request.
       const optionsObj = getOptions(options, request, this);
       schema = optionsObj.schema;
+      context = optionsObj.context;
       rootValue = optionsObj.rootValue;
       pretty = optionsObj.pretty;
       graphiql = optionsObj.graphiql;
@@ -184,6 +191,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
             schema,
             documentAST,
             rootValue,
+            context,
             variables,
             operationName
           ));

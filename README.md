@@ -131,7 +131,8 @@ depending on the provided *Content-Type* header.
 In order to support advanced scenarios such as installing a GraphQL server on a
 dynamic endpoint or accessing the current authentication information,
 koa-graphql allows options to be provided as a function of each
-koa request.
+koa request, and that function may return either an options object, or a
+Promise for an options object.
 
 This example uses [`koa-session`][] provide GraphQL with the currently
 logged-in session as the `context` of the query execution.

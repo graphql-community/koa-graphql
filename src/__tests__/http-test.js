@@ -336,6 +336,23 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('Allows returning an options Promise', async () => {
+      var app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP(() => Promise.resolve({
+        schema: TestSchema,
+      }))));
+
+      var response = await request(app.listen())
+        .get(urlString({
+          query: '{test}'
+        }));
+
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World"}}'
+      );
+    });
+
   });
 
   describe('POST functionality', () => {

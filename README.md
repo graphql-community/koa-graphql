@@ -49,7 +49,10 @@ The `graphqlHTTP` function accepts the following options:
   * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
     A `schema` *must* be provided.
 
-  * **`rootValue`**: A value to pass as the rootValue to the `graphql()`
+  * **`context`**: A value to pass as the `context` to the `graphql()`
+    function from [`graphql-js`][].
+
+  * **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
     function from [`graphql-js`][].
 
   * **`pretty`**: If `true`, any JSON response will be pretty-printed.
@@ -109,7 +112,7 @@ If not found in the query-string, it will look in the POST request body.
 If a previous middleware has already parsed the POST body, the `request.body`
 value will be used. Use [`multer`][] or a similar middleware to add support
 for `multipart/form-data` content, which may be useful for GraphQL mutations
-involving uploading files. See an [example using multer](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js#L602).
+involving uploading files. See an [example using multer](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js#L631).
 
 If the POST body has not yet been parsed, graphql-express will interpret it
 depending on the provided *Content-Type* header.
@@ -130,8 +133,8 @@ dynamic endpoint or accessing the current authentication information,
 koa-graphql allows options to be provided as a function of each
 koa request.
 
-This example uses [`koa-session`][] to run GraphQL on a rootValue based on
-the currently logged-in session.
+This example uses [`koa-session`][] provide GraphQL with the currently
+logged-in session as the `context` of the query execution.
 
 ```js
 var koa = require('koa');
@@ -149,12 +152,13 @@ app.use(function *(next) {
 
 app.use(mount('/graphql', graphqlHTTP((request, context) => ({
   schema: MySessionAwareGraphQLSchema,
-  context: { session: context.session },
+  context: context.session,
   graphiql: true
 }))));
 ```
 
-Then in your type definitions, access `session` from the context:
+Then in your type definitions, access via the third "context" argument in your
+`resolve` function:
 
 ```js
 new GraphQLObjectType({
@@ -162,7 +166,7 @@ new GraphQLObjectType({
   fields: {
     myField: {
       type: GraphQLString,
-      resolve(parentValue, _, { session }) {
+      resolve(parentValue, args, session) {
         // use `session` here
       }
     }

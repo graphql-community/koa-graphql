@@ -1430,7 +1430,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             myField: {
               type: GraphQLString,
-              resolve(parentValue, _, { session: sess }) {
+              resolve(parentValue, _, sess) {
                 return sess.id;
               }
             }
@@ -1447,7 +1447,7 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount('/graphql', graphqlHTTP((_, ctx) => ({
         schema: SessionAwareGraphQLSchema,
-        context: { session: ctx.session }
+        context: ctx.session
       }))));
 
       var response = await request(app.listen())

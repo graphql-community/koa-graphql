@@ -203,7 +203,7 @@ describe('GraphQL-HTTP tests', () => {
       const error = await catchError(
         request(app.listen())
           .get(urlString({
-            query: `{ test, unknownOne, unknownTwo }`
+            query: '{ test, unknownOne, unknownTwo }'
           }))
       );
 

@@ -9,7 +9,7 @@ Create a GraphQL HTTP server with [Koa](http://koajs.com/).
 
 Port from [express-graphql](https://github.com/graphql/express-graphql)
 
-## Install
+## Installation
 
 ```
 npm install --save koa-graphql
@@ -18,31 +18,39 @@ npm install --save koa-graphql
 ## Usage
 
 ```js
-var koa = require('koa');
-var mount = require('koa-mount'); // koa-mount@1.x
-var graphqlHTTP = require('koa-graphql');
+import koa from 'koa';
+import mount from 'koa-mount'; // koa-mount@1.x
+import graphqlHTTP from 'koa-graphql';
 
-var app = koa();
+const app = koa();
 
-app.use(mount('/graphql', graphqlHTTP({ schema: MyGraphQLSchema, graphiql: true })));
+app.use(mount('/graphql', graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: true
+})));
+
+app.listen(3000);
 ```
 
 For Koa 2, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
 
 ```js
-var koa = require('koa');
-var mount = require('koa-mount'); // koa-mount@2.x
-var convert = require('koa-convert');
-var graphqlHTTP = require('koa-graphql');
+import koa from 'koa';
+import mount from 'koa-mount'; // koa-mount@2.x
+import convert from 'koa-convert';
+import graphqlHTTP from 'koa-graphql';
 
-var app = new Koa();
+const app = new Koa();
 
-app.use(mount('/graphql', convert(graphqlHTTP({ schema: MyGraphQLSchema, graphiql: true }))));
+app.use(mount('/graphql', convert(graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: true
+}))));
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
 
-### Options
+## Options
 
 The `graphqlHTTP` function accepts the following options:
 
@@ -68,7 +76,7 @@ The `graphqlHTTP` function accepts the following options:
   * **`graphiql`**: If `true`, may present [GraphiQL][] when loaded directly
     from a browser (a useful tool for debugging and exploration).
 
-#### Debugging
+## Debugging
 
 During development, it's useful to get more information from errors, such as
 stack traces. Providing a function to `formatError` enables this:
@@ -82,7 +90,7 @@ formatError: error => ({
 ```
 
 
-### HTTP Usage
+## HTTP Usage
 
 Once installed at a path, `koa-graphql` will accept requests with
 the parameters:
@@ -126,11 +134,11 @@ depending on the provided *Content-Type* header.
   * **`application/graphql`**: The POST body will be parsed as GraphQL
     query string, which provides the `query` parameter.
 
-### Advanced Options
+## Advanced Options
 
 In order to support advanced scenarios such as installing a GraphQL server on a
 dynamic endpoint or accessing the current authentication information,
-koa-graphql allows options to be provided as a function of each
+`koa-graphql` allows options to be provided as a function of each
 koa request, and that function may return either an options object, or a
 Promise for an options object.
 
@@ -138,12 +146,12 @@ This example uses [`koa-session`][] provide GraphQL with the currently
 logged-in session as the `context` of the query execution.
 
 ```js
-var koa = require('koa');
-var mount = require('koa-mount');
-var session = require('koa-session');
-var graphqlHTTP = require('koa-graphql');
+import koa from 'koa';
+import mount from 'koa-mount';
+import session from 'koa-session';
+import graphqlHTTP from 'koa-graphql';
 
-var app = koa();
+const app = koa();
 app.keys = [ 'some secret hurr' ];
 app.use(session(app));
 app.use(function *(next) {

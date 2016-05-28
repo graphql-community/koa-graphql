@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 
-require('babel/register')({
-  ignore: /node_modules/,
-  optional: [ 'asyncToGenerator' ]
+require('babel-register')({
+  plugins: [ 'transform-async-to-generator', 'transform-runtime' ]
 });
 
 process.on('unhandledRejection', function (error) {

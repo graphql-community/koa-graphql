@@ -877,6 +877,28 @@ describe('GraphQL-HTTP tests', () => {
     });
   });
 
+  it('will send request and context when using thunk', async () => {
+    const app = koa();
+
+    let hasRequest = false;
+    let hasContext = false;
+
+    app.use(mount(urlString(), graphqlHTTP((reqest, context) => {
+      if (request) {
+        hasRequest = true;
+      }
+      if (context) {
+        hasContext = true;
+      }
+      return { schema: TestSchema };
+    })));
+
+    await request(app.listen()).get(urlString({ query: '{test}' }));
+
+    expect(hasRequest).to.equal(true);
+    expect(hasContext).to.equal(true);
+  });
+
   describe('Error handling functionality', () => {
     it('handles field errors caught by GraphQL', async () => {
       const app = koa();

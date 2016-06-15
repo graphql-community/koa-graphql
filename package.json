@@ -42,7 +42,11 @@
     "plugins": [
       "add-module-exports",
       "transform-class-properties",
-      "transform-flow-strip-types"
+      "transform-flow-strip-types",
+      ["transform-runtime", {
+        "polyfill": false,
+        "regenerator": true
+      }]
     ]
   },
   "scripts": {
@@ -58,6 +62,7 @@
     "preversion": "npm test"
   },
   "dependencies": {
+    "babel-runtime": "^6.9.0",
     "content-type": "^1.0.1",
     "http-errors": "^1.3.1",
     "raw-body": "^2.1.2",
@@ -70,7 +75,7 @@
     "babel-plugin-transform-async-to-generator": "6.8.0",
     "babel-plugin-transform-class-properties": "6.9.0",
     "babel-plugin-transform-flow-strip-types": "6.8.0",
-    "babel-plugin-transform-runtime": "6.9.0",
+    "babel-plugin-transform-runtime": "^6.9.0",
     "babel-preset-es2015": "6.9.0",
     "babel-register": "6.9.0",
     "babel-runtime": "6.9.0",

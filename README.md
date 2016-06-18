@@ -61,6 +61,7 @@ router.all('/graphql', convert(graphqlHTTP({
   schema: MyGraphQLSchema,
   graphiql: true
 })));
+
 app.use(router.routes()).use(router.allowedMethods());
 ```
 

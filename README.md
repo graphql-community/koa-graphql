@@ -50,6 +50,13 @@ app.use(mount('/graphql', convert(graphqlHTTP({
 
 For Koa 2 with koa-router@7
 ```js
+import koa from 'koa';
+import koaRouter from 'koa-router'; // koa-router@7.x
+import convert from 'koa-convert';
+import graphqlHTTP from 'koa-graphql';
+const app = new Koa();
+const router = koaRouter();
+
 router.all('/graphql', convert(graphqlHTTP({
   schema: MyGraphQLSchema,
   graphiql: true

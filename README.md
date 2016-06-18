@@ -54,8 +54,7 @@ router.all('/graphql', convert(graphqlHTTP({
   schema: MyGraphQLSchema,
   graphiql: true
 })));
-.use(router.routes())
-.use(router.allowedMethods());
+app.use(router.routes()).use(router.allowedMethods());
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.

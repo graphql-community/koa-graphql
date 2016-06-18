@@ -48,6 +48,16 @@ app.use(mount('/graphql', convert(graphqlHTTP({
 }))));
 ```
 
+For Koa 2 with koa-router@7
+```js
+router.all('/graphql', convert(graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: true
+})));
+.use(router.routes())
+.use(router.allowedMethods());
+```
+
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
 
 ## Options

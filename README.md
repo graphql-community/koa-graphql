@@ -141,7 +141,7 @@ value will be used. Use [`multer`][] or a similar middleware to add support
 for `multipart/form-data` content, which may be useful for GraphQL mutations
 involving uploading files. See an [example using multer](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js#L631).
 
-If the POST body has not yet been parsed, graphql-express will interpret it
+If the POST body has not yet been parsed, koa-graphql will interpret it
 depending on the provided *Content-Type* header.
 
   * **`application/json`**: the POST body will be parsed as a JSON

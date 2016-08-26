@@ -45,7 +45,13 @@ const QueryRootType = new GraphQLObjectType({
     context: {
       type: GraphQLString,
       resolve: (obj, args, context) => context
-    }
+    },
+    contextDotFoo: {
+      type: GraphQLString,
+      resolve: (obj, args, context) => {
+        return context.foo;
+      },
+    },
   }
 });
 
@@ -332,6 +338,35 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           context: 'testValue'
+        }
+      });
+    });
+
+    it('Uses ctx as context by default', async () => {
+      const app = koa();
+
+      // Middleware that adds ctx.foo to every request
+      app.use(function *(next) {
+        this.foo = 'bar';
+        yield next;
+      });
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestQuery',
+          query: `
+            query TestQuery { contextDotFoo }
+          `
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          contextDotFoo: 'bar'
         }
       });
     });

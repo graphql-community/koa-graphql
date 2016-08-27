@@ -18,7 +18,7 @@ import type { Context, Request } from 'koa';
 
 
 /**
- * Used to configure the graphQLHTTP middleware by providing a schema
+ * Used to configure the graphqlHTTP middleware by providing a schema
  * and other configuration options.
  *
  * Options can be provided as an Object, a Promise for an Object, or a Function
@@ -84,7 +84,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
     const response = this.response;
 
     // Higher scoped variables are referred to at various stages in the
-    // asyncronous state machine below.
+    // asynchronous state machine below.
     let schema;
     let context;
     let rootValue;
@@ -101,7 +101,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
 
     try {
       // Promises are used as a mechanism for capturing any thrown errors during
-      // the asyncronous process below.
+      // the asynchronous process below.
 
       // Resolve the Options to get OptionsData.
       const optionsData = yield Promise.resolve(
@@ -125,7 +125,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
 
       // Collect information from the options data object.
       schema = optionsData.schema;
-      context = optionsData.context;
+      context = optionsData.context || this;
       rootValue = optionsData.rootValue;
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;

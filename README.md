@@ -17,10 +17,12 @@ npm install --save koa-graphql
 
 ## Usage
 
+Mount `koa-graphql` as a route handler:
+
 ```js
-import koa from 'koa';
-import mount from 'koa-mount'; // koa-mount@1.x
-import graphqlHTTP from 'koa-graphql';
+const koa = require('koa');
+const mount = require('koa-mount'); // koa-mount@1.x
+const graphqlHTTP = require('koa-graphql');
 
 const app = koa();
 
@@ -29,16 +31,16 @@ app.use(mount('/graphql', graphqlHTTP({
   graphiql: true
 })));
 
-app.listen(3000);
+app.listen(4000);
 ```
 
 For Koa 2, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
 
 ```js
-import koa from 'koa';
-import mount from 'koa-mount'; // koa-mount@2.x
-import convert from 'koa-convert';
-import graphqlHTTP from 'koa-graphql';
+const koa = require('koa');
+const mount = require('koa-mount'); // koa-mount@2.x
+const convert = require('koa-convert');
+const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 
@@ -51,10 +53,10 @@ app.use(mount('/graphql', convert(graphqlHTTP({
 For Koa 2 with koa-router@7
 
 ```js
-import koa from 'koa';
-import Router from 'koa-router'; // koa-router@7.x
-import convert from 'koa-convert';
-import graphqlHTTP from 'koa-graphql';
+const koa = require('koa');
+const Router = require('koa-router'); // koa-router@7.x
+const convert = require('koa-convert');
+const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 const router = new Router();
@@ -76,37 +78,26 @@ The `graphqlHTTP` function accepts the following options:
   * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
     A `schema` *must* be provided.
 
-  * **`context`**: A value to pass as the `context` to the `graphql()`
-    function from [`graphql-js`][].
+  * **`graphiql`**: If `true`, presents [GraphiQL][] when the route with a
+    `/graphiql` appended is loaded in a browser. We recommend that you set
+    `graphiql` to `true` when your app is in development, because it's
+    quite useful. You may or may not want it in production.
 
   * **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
     function from [`graphql-js`][].
+
+  * **`context`**: A value to pass as the `context` to the `graphql()`
+    function from [`graphql-js`][]. If `context` is not provided, the
+    `request` object is passed as the context.
 
   * **`pretty`**: If `true`, any JSON response will be pretty-printed.
 
   * **`formatError`**: An optional function which will be used to format any
     errors produced by fulfilling a GraphQL operation. If no function is
-    provided, GraphQL's default spec-compliant [`formatError`][] function will
-    be used.
+    provided, GraphQL's default spec-compliant [`formatError`][] function will be used.
 
   * **`validationRules`**: Optional additional validation rules queries must
     satisfy in addition to those defined by the GraphQL spec.
-
-  * **`graphiql`**: If `true`, may present [GraphiQL][] when loaded directly
-    from a browser (a useful tool for debugging and exploration).
-
-## Debugging
-
-During development, it's useful to get more information from errors, such as
-stack traces. Providing a function to `formatError` enables this:
-
-```js
-formatError: error => ({
-  message: error.message,
-  locations: error.locations,
-  stack: error.stack
-})
-```
 
 
 ## HTTP Usage
@@ -153,22 +144,19 @@ depending on the provided *Content-Type* header.
   * **`application/graphql`**: The POST body will be parsed as GraphQL
     query string, which provides the `query` parameter.
 
-## Advanced Options
+## Combining with Other koa Middleware
 
-In order to support advanced scenarios such as installing a GraphQL server on a
-dynamic endpoint or accessing the current authentication information,
-`koa-graphql` allows options to be provided as a function of each
-koa request, and that function may return either an options object, or a
-Promise for an options object.
+By default, the koa request is passed as the GraphQL `context`.
+Since most koa middleware operates by adding extra data to the
+request object, this means you can use most koa middleware just by inserting it before `graphqlHTTP` is mounted. This covers scenarios such as authenticating the user, handling file uploads, or mounting GraphQL on a dynamic endpoint.
 
-This example uses [`koa-session`][] provide GraphQL with the currently
-logged-in session as the `context` of the query execution.
+This example uses [`koa-session`][] to provide GraphQL with the currently logged-in session.
 
 ```js
-import koa from 'koa';
-import mount from 'koa-mount';
-import session from 'koa-session';
-import graphqlHTTP from 'koa-graphql';
+const koa = require('koa');
+const mount = require('koa-mount');
+const session = require('koa-session');
+const graphqlHTTP = require('koa-graphql');
 
 const app = koa();
 app.keys = [ 'some secret hurr' ];
@@ -178,15 +166,13 @@ app.use(function *(next) {
   yield next;
 });
 
-app.use(mount('/graphql', graphqlHTTP((request, context) => ({
+app.use(mount('/graphql', graphqlHTTP({
   schema: MySessionAwareGraphQLSchema,
-  context: context.session,
   graphiql: true
-}))));
+})));
 ```
 
-Then in your type definitions, access via the third "context" argument in your
-`resolve` function:
+Then in your type definitions, you can access the ctx via the third "context" argument in your `resolve` function:
 
 ```js
 new GraphQLObjectType({
@@ -194,13 +180,28 @@ new GraphQLObjectType({
   fields: {
     myField: {
       type: GraphQLString,
-      resolve(parentValue, args, session) {
-        // use `session` here
+      resolve(parentValue, args, ctx) {
+        // use `ctx.session` here
       }
     }
   }
 });
 ```
+
+
+## Debugging Tips
+
+During development, it's useful to get more information from errors, such as
+stack traces. Providing a function to `formatError` enables this:
+
+```js
+formatError: error => ({
+  message: error.message,
+  locations: error.locations,
+  stack: error.stack
+})
+```
+
 
 ### Examples
 

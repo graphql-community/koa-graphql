@@ -12,7 +12,7 @@ import type { Request } from 'koa';
 export function parseBody(
   req: http$IncomingMessage,
   request: Request
-): Promise<Object> {
+): Promise<{[param: string]: mixed}> {
   return new Promise((resolve, reject) => {
     // If koa has already parsed a body as a keyed object, use it.
     if (typeof req.body === 'object' && !(req.body instanceof Buffer)) {

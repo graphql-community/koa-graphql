@@ -2,17 +2,19 @@ sudo: false
 
 language: node_js
 
+# https://github.com/nodejs/LTS
 node_js:
   - "7"
   - "6"
-  - "5"
   - "4"
-  - "iojs"
   - "0.12"
+
+git:
+  depth: 5
 
 cache:
   directories:
-    - node_modules
+    - ~/.npm
 
 script:
   - if [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then npm run lint && npm run check && npm run cover:lcov; else npm run testonly; fi

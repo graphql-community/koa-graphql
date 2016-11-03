@@ -67,7 +67,7 @@ export type OptionsData = {
   graphiql?: ?boolean,
 };
 
-type Middleware = () => Generator<Promise, void, void>;
+type Middleware = () => Generator<Promise<mixed>, void, void>;
 
 /**
  * Middleware for express; takes an options object or function as input to

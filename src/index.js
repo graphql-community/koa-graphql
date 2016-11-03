@@ -31,7 +31,7 @@ export type OptionsData = {
   /**
    * A GraphQL schema from graphql-js.
    */
-  schema: Object,
+  schema: mixed,
 
   /**
    * A value to pass as the context to the graphql() function.
@@ -41,7 +41,7 @@ export type OptionsData = {
   /**
    * An object to pass as the rootValue to the graphql() function.
    */
-  rootValue?: ?Object,
+  rootValue?: ?mixed,
 
   /**
    * A boolean to configure whether the output should be pretty-printed.
@@ -53,13 +53,13 @@ export type OptionsData = {
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
    */
-  formatError?: ?Function,
+  formatError?: ?(error: any) => mixed,
 
   /**
    * An optional array of validation rules that will be applied on the document
    * in additional to those defined by the GraphQL spec.
    */
-  validationRules?: ?Array<any>,
+  validationRules?: ?Array<mixed>,
 
   /**
    * A boolean to optionally enable GraphiQL mode.
@@ -67,13 +67,13 @@ export type OptionsData = {
   graphiql?: ?boolean,
 };
 
-type Middleware = () => Generator<Promise, void, void>;
+type Middleware = () => Generator<Promise<mixed>, void, void>;
 
 /**
  * Middleware for express; takes an options object or function as input to
  * configure behavior, and returns an express middleware.
  */
-export default function graphqlHTTP(options: Options) : Middleware {
+export default function graphqlHTTP(options: Options): Middleware {
   if (!options) {
     throw new Error('GraphQL middleware requires options.');
   }
@@ -255,29 +255,40 @@ export default function graphqlHTTP(options: Options) : Middleware {
 
 type GraphQLParams = {
   query: ?string;
-  variables: ?Object;
+  variables: ?{[name: string]: mixed};
   operationName: ?string;
-}
+};
 
 /**
  * Helper function to get the GraphQL params from the request.
  */
-function getGraphQLParams(urlData: Object, bodyData: Object): GraphQLParams {
+function getGraphQLParams(
+  urlData: {[param: string]: mixed},
+  bodyData: {[param: string]: mixed}
+): GraphQLParams {
   // GraphQL Query string.
-  const query = urlData.query || bodyData.query;
+  let query = urlData.query || bodyData.query;
+  if (typeof query !== 'string') {
+    query = null;
+  }
 
   // Parse the variables if needed.
   let variables = urlData.variables || bodyData.variables;
-  if (variables && typeof variables === 'string') {
+  if (typeof variables === 'string') {
     try {
       variables = JSON.parse(variables);
     } catch (error) {
       throw httpError(400, 'Variables are invalid JSON.');
     }
+  } else if (typeof variables !== 'object') {
+    variables = null;
   }
 
   // Name of GraphQL operation to execute.
-  const operationName = urlData.operationName || bodyData.operationName;
+  let operationName = urlData.operationName || bodyData.operationName;
+  if (typeof operationName !== 'string') {
+    operationName = null;
+  }
 
   return { query, variables, operationName };
 }
@@ -287,8 +298,8 @@ function getGraphQLParams(urlData: Object, bodyData: Object): GraphQLParams {
  */
 function canDisplayGraphiQL(
   request: Request,
-  urlData: Object,
-  bodyData: Object
+  urlData: {[param: string]: mixed},
+  bodyData: {[param: string]: mixed}
 ): boolean {
   // If `raw` exists, GraphiQL mode is not enabled.
   const raw = urlData.raw !== undefined || bodyData.raw !== undefined;

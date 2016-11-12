@@ -38,8 +38,12 @@ const QueryRootType = new GraphQLObjectType({
       },
       resolve: (root, { who }) => 'Hello ' + (who || 'World')
     },
-    thrower: {
+    nonNullThrower: {
       type: new GraphQLNonNull(GraphQLString),
+      resolve: () => { throw new Error('Throws!'); }
+    },
+    thrower: {
+      type: GraphQLString,
       resolve: () => { throw new Error('Throws!'); }
     },
     context: {
@@ -949,6 +953,30 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
+        data: { thrower: null },
+        errors: [ {
+          message: 'Throws!',
+          locations: [ { line: 1, column: 2 } ]
+        } ]
+      });
+    });
+
+    it('handles query errors from non-null top field errors', async () => {
+      const app = koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema
+      })));
+
+      const error = await catchError(
+        request(app.listen())
+          .get(urlString({
+            query: '{nonNullThrower}',
+          }))
+      );
+
+      expect(error.response.status).to.equal(500);
+      expect(JSON.parse(error.response.text)).to.deep.equal({
         data: null,
         errors: [ {
           message: 'Throws!',
@@ -974,7 +1002,7 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
-        data: null,
+        data: { thrower: null },
         errors: [ {
           message: 'Custom error format: Throws!',
         } ]
@@ -1002,7 +1030,7 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
-        data: null,
+        data: { thrower: null },
         errors: [ {
           message: 'Throws!',
           locations: [ { line: 1, column: 2 } ],

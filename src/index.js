@@ -231,6 +231,14 @@ export default function graphqlHTTP(options: Options): Middleware {
       result = { errors: [ error ] };
     }
 
+    // If no data was included in the result, that indicates a runtime query
+    // error, indicate as such with a generic status code.
+    // Note: Information about the error itself will still be contained in
+    // the resulting JSON payload.
+    // http://facebook.github.io/graphql/#sec-Data
+    if (result && result.data === null) {
+      response.status = 500;
+    }
     // Format any encountered errors.
     if (result && result.errors) {
       result.errors = result.errors.map(formatErrorFn || formatError);
@@ -238,17 +246,17 @@ export default function graphqlHTTP(options: Options): Middleware {
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      const data = renderGraphiQL({
+      const payload = renderGraphiQL({
         query, variables,
         operationName, result
       });
       response.type = 'text/html';
-      response.body = data;
+      response.body = payload;
     } else {
       // Otherwise, present JSON directly.
-      const data = JSON.stringify(result, null, pretty ? 2 : 0);
+      const payload = JSON.stringify(result, null, pretty ? 2 : 0);
       response.type = 'application/json';
-      response.body = data;
+      response.body = payload;
     }
   };
 }

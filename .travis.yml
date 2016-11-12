@@ -16,6 +16,9 @@ cache:
   directories:
     - ~/.npm
 
+before_install:
+  - npm config set spin false --global
+
 script:
   - if [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then npm run lint && npm run check && npm run cover:lcov; else npm run testonly; fi
 

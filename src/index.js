@@ -9,7 +9,7 @@ import {
   getOperationAST,
   specifiedRules
 } from 'graphql';
-import expressGraphQL from 'express-graphql';
+import { getGraphQLParams } from 'express-graphql';
 import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
@@ -21,7 +21,6 @@ import type {
 import type { Context, Request } from 'koa';
 import type { RequestInfo, GraphQLParams } from 'express-graphql';
 
-const { getGraphQLParams } = expressGraphQL;
 
 /**
  * Used to configure the graphqlHTTP middleware by providing a schema
@@ -91,7 +90,8 @@ type Middleware = () => Generator<Promise<mixed>, void, void>;
  * Middleware for express; takes an options object or function as input to
  * configure behavior, and returns an express middleware.
  */
-export default function graphqlHTTP(options: Options): Middleware {
+module.exports = graphqlHTTP;
+function graphqlHTTP(options: Options): Middleware {
   if (!options) {
     throw new Error('GraphQL middleware requires options.');
   }

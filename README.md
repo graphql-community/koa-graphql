@@ -96,6 +96,13 @@ The `graphqlHTTP` function accepts the following options:
     errors produced by fulfilling a GraphQL operation. If no function is
     provided, GraphQL's default spec-compliant [`formatError`][] function will be used.
 
+  * **`extensions`**: An optional function for adding additional metadata to the
+    GraphQL response as a key-value object. The result will be added to
+    `"extensions"` field in the resulting JSON. This is often a useful place to
+    add development time metadata such as the runtime of a query or the amount
+    of resources consumed. This may be an async function. The function is
+		give one object as an argument: `{ document, variables, operationName, result }`.
+
   * **`validationRules`**: Optional additional validation rules queries must
     satisfy in addition to those defined by the GraphQL spec.
 
@@ -189,6 +196,54 @@ new GraphQLObjectType({
 ```
 
 
+## Providing Extensions
+
+The GraphQL response allows for adding additional information in a response to
+a GraphQL query via a field in the response called `"extensions"`. This is added
+by providing an `extensions` function when using `graphqlHTTP`. The function
+must return a JSON-serializable Object.
+
+When called, this is provided an argument which you can use to get information
+about the GraphQL request:
+
+`{ document, variables, operationName, result }`
+
+This example illustrates adding the amount of time consumed by running the
+provided query, which could perhaps be used by your development tools.
+
+```js
+const graphqlHTTP = require('koa-graphql');
+
+const app = koa();
+
+app.keys = [ 'some secret hurr' ];
+app.use(session(app));
+
+app.use(mount('/graphql', graphqlHTTP(request => {
+  const startTime = Date.now();
+  return {
+    schema: MyGraphQLSchema,
+    graphiql: true,
+    extensions({ document, variables, operationName, result }) {
+      return { runTime: Date.now() - startTime };
+    }
+  };
+})));
+```
+
+When querying this endpoint, it would include this information in the result,
+for example:
+
+```js
+{
+  "data": { ... }
+  "extensions": {
+    "runTime": 135
+  }
+}
+```
+
+
 ## Debugging Tips
 
 During development, it's useful to get more information from errors, such as
@@ -207,6 +262,7 @@ formatError: error => ({
 
 - [koa-graphql-relay-example](https://github.com/chentsulin/koa-graphql-relay-example)
 - [tests](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js)
+
 
 ### Other relevant projects
 

@@ -15,7 +15,7 @@ import httpError from 'http-errors';
 import { renderGraphiQL } from './renderGraphiQL';
 
 import type { Context, Request } from 'koa';
-import type { GraphQLParams } from 'express-graphql';
+import type { RequestInfo, GraphQLParams } from 'express-graphql';
 
 const { getGraphQLParams } = expressGraphQL;
 
@@ -64,6 +64,18 @@ export type OptionsData = {
   validationRules?: ?Array<mixed>,
 
   /**
+   * An optional function for adding additional metadata to the GraphQL response
+   * as a key-value object. The result will be added to "extensions" field in
+   * the resulting JSON. This is often a useful place to add development time
+   * info such as the runtime of a query or the amount of resources consumed.
+   *
+   * Information about the request is provided to be used.
+   *
+   * This function may be async.
+   */
+  extensions?: ?(info: RequestInfo) => {[key: string]: mixed};
+
+  /**
    * A boolean to optionally enable GraphiQL mode.
    */
   graphiql?: ?boolean,
@@ -93,8 +105,10 @@ export default function graphqlHTTP(options: Options): Middleware {
     let pretty;
     let graphiql;
     let formatErrorFn;
+    let extensionsFn;
     let showGraphiQL;
     let query;
+    let documentAST;
     let variables;
     let operationName;
     let validationRules;
@@ -132,6 +146,7 @@ export default function graphqlHTTP(options: Options): Middleware {
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
       formatErrorFn = optionsData.formatError;
+      extensionsFn = optionsData.extensions;
 
       validationRules = specifiedRules;
       if (optionsData.validationRules) {
@@ -170,7 +185,6 @@ export default function graphqlHTTP(options: Options): Middleware {
         const source = new Source(query, 'GraphQL request');
 
         // Parse source to AST, reporting any syntax error.
-        let documentAST;
         try {
           documentAST = parse(source);
         } catch (syntaxError) {
@@ -225,6 +239,23 @@ export default function graphqlHTTP(options: Options): Middleware {
           resolve({ errors: [ contextError ] });
         }
       });
+
+      // Collect and apply any metadata extensions if a function was provided.
+      // http://facebook.github.io/graphql/#sec-Response-Format
+      if (result && extensionsFn) {
+        result = yield Promise.resolve(extensionsFn({
+          document: documentAST,
+          variables,
+          operationName,
+          result,
+        }))
+        .then(extensions => {
+          if (extensions && typeof extensions === 'object') {
+            (result: any).extensions = extensions;
+          }
+          return result;
+        });
+      }
     } catch (error) {
       // If an error was caught, report the httpError status, or 500.
       response.status = error.status || 500;

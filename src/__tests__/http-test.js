@@ -36,7 +36,7 @@ const QueryRootType = new GraphQLObjectType({
           type: GraphQLString
         }
       },
-      resolve: (root, { who }) => 'Hello ' + (who || 'World')
+      resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World')
     },
     nonNullThrower: {
       type: new GraphQLNonNull(GraphQLString),
@@ -53,7 +53,7 @@ const QueryRootType = new GraphQLObjectType({
     contextDotFoo: {
       type: GraphQLString,
       resolve: (obj, args, context) => {
-        return context.foo;
+        return (context: any).foo;
       },
     },
   }
@@ -914,7 +914,8 @@ describe('GraphQL-HTTP tests', () => {
         data: { thrower: null },
         errors: [ {
           message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ]
+          locations: [ { line: 1, column: 2 } ],
+          path: [ 'thrower' ]
         } ]
       });
     });
@@ -936,7 +937,8 @@ describe('GraphQL-HTTP tests', () => {
         data: null,
         errors: [ {
           message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ]
+          locations: [ { line: 1, column: 2 } ],
+          path: [ 'nonNullThrower' ]
         } ]
       });
     });
@@ -1485,7 +1487,7 @@ describe('GraphQL-HTTP tests', () => {
             myField: {
               type: GraphQLString,
               resolve(parentValue, _, sess) {
-                return sess.id;
+                return (sess: any).id;
               }
             }
           }

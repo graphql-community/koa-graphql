@@ -14,6 +14,10 @@ import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
 
+import type {
+  GraphQLError,
+  GraphQLSchema
+} from 'graphql';
 import type { Context, Request } from 'koa';
 import type { RequestInfo, GraphQLParams } from 'express-graphql';
 
@@ -33,7 +37,7 @@ export type OptionsData = {
   /**
    * A GraphQL schema from graphql-js.
    */
-  schema: mixed,
+  schema: GraphQLSchema,
 
   /**
    * A value to pass as the context to the graphql() function.
@@ -55,7 +59,7 @@ export type OptionsData = {
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
    */
-  formatError?: ?(error: any) => mixed,
+  formatError?: ?(error: GraphQLError) => mixed,
 
   /**
    * An optional array of validation rules that will be applied on the document
@@ -272,7 +276,7 @@ export default function graphqlHTTP(options: Options): Middleware {
     }
     // Format any encountered errors.
     if (result && result.errors) {
-      result.errors = result.errors.map(formatErrorFn || formatError);
+      (result: any).errors = result.errors.map(formatErrorFn || formatError);
     }
 
     // If allowed to show GraphiQL, present it instead of JSON.

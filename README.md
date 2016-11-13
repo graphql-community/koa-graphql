@@ -88,7 +88,7 @@ The `graphqlHTTP` function accepts the following options:
 
   * **`context`**: A value to pass as the `context` to the `graphql()`
     function from [`graphql-js`][]. If `context` is not provided, the
-    `request` object is passed as the context.
+    `ctx` object is passed as the context.
 
   * **`pretty`**: If `true`, any JSON response will be pretty-printed.
 

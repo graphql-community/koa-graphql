@@ -874,15 +874,19 @@ describe('GraphQL-HTTP tests', () => {
     });
   });
 
-  it('will send request and context when using thunk', async () => {
+  it('will send request, response and context when using thunk', async () => {
     const app = koa();
 
     let hasRequest = false;
+    let hasResponse = false;
     let hasContext = false;
 
-    app.use(mount(urlString(), graphqlHTTP((reqest, context) => {
+    app.use(mount(urlString(), graphqlHTTP((reqest, response, context) => {
       if (request) {
         hasRequest = true;
+      }
+      if (response) {
+        hasResponse = true;
       }
       if (context) {
         hasContext = true;
@@ -893,6 +897,7 @@ describe('GraphQL-HTTP tests', () => {
     await request(app.listen()).get(urlString({ query: '{test}' }));
 
     expect(hasRequest).to.equal(true);
+    expect(hasResponse).to.equal(true);
     expect(hasContext).to.equal(true);
   });
 
@@ -1501,9 +1506,9 @@ describe('GraphQL-HTTP tests', () => {
         yield next;
       });
 
-      app.use(mount('/graphql', graphqlHTTP((_, ctx) => ({
+      app.use(mount('/graphql', graphqlHTTP((req, res, ctx) => ({
         schema: SessionAwareGraphQLSchema,
-        context: ctx.session
+        context: (ctx: any).session
       }))));
 
       const response = await request(app.listen())

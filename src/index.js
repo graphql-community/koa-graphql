@@ -125,7 +125,9 @@ function graphqlHTTP(options: Options): Middleware {
 
       // Resolve the Options to get OptionsData.
       const optionsData = yield Promise.resolve(
-        typeof options === 'function' ? options(request, this) : options
+        typeof options === 'function' ?
+          options(request, response, this) :
+          options
       );
 
       // Assert that optionsData is in fact an Object.

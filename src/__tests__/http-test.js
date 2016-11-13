@@ -80,18 +80,6 @@ function urlString(urlParams?: ?{[param: string]: mixed}) {
   return string;
 }
 
-function catchError(p: any): Promise<any> {
-  return p.then(
-    () => { throw new Error('Expected to catch error.'); },
-    error => {
-      if (!(error instanceof Error)) {
-        throw new Error('Expected to catch error.');
-      }
-      return error;
-    }
-  );
-}
-
 function promiseTo(fn) {
   return new Promise((resolve, reject) => {
     fn((error, result) => error ? reject(error) : resolve(result));
@@ -99,26 +87,6 @@ function promiseTo(fn) {
 }
 
 describe('test harness', () => {
-
-  it('expects to catch errors', async () => {
-    let caught;
-    try {
-      await catchError(Promise.resolve());
-    } catch (error) {
-      caught = error;
-    }
-    expect(caught && caught.message).to.equal('Expected to catch error.');
-  });
-
-  it('expects to catch actual errors', async () => {
-    let caught;
-    try {
-      await catchError(Promise.reject('not a real error'));
-    } catch (error) {
-      caught = error;
-    }
-    expect(caught && caught.message).to.equal('Expected to catch error.');
-  });
 
   it('resolves callback promises', async () => {
     const resolveValue = {};
@@ -210,15 +178,13 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: '{ test, unknownOne, unknownTwo }'
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{ test, unknownOne, unknownTwo }'
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
             message: 'Cannot query field "unknownOne" on type "QueryRoot".',
@@ -237,18 +203,16 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: `
-              query TestQuery { test }
-              mutation TestMutation { writeTest { test } }
-            `
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: `
+            query TestQuery { test }
+            mutation TestMutation { writeTest { test } }
+          `
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Must provide operation name if query contains multiple operations.' }
         ]
@@ -260,15 +224,13 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: 'mutation TestMutation { writeTest { test } }'
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: 'mutation TestMutation { writeTest { test } }'
+        }));
 
-      expect(error.response.status).to.equal(405);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Can only perform a mutation operation from a POST request.' }
         ]
@@ -280,19 +242,17 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            operationName: 'TestMutation',
-            query: `
-              query TestQuery { test }
-              mutation TestMutation { writeTest { test } }
-            `
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestMutation',
+          query: `
+            query TestQuery { test }
+            mutation TestMutation { writeTest { test } }
+          `
+        }));
 
-      expect(error.response.status).to.equal(405);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Can only perform a mutation operation from a POST request.' }
         ]
@@ -399,15 +359,13 @@ describe('GraphQL-HTTP tests', () => {
         throw new Error('I did something wrong');
       })));
 
-      const req = request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{test}'
         }));
 
-      const error = await catchError(req);
-
-      expect(error.response.status).to.equal(500);
-      expect(error.response.text).to.equal(
+      expect(response.status).to.equal(500);
+      expect(response.text).to.equal(
         '{"errors":[{"message":"I did something wrong"}]}'
       );
     });
@@ -811,10 +769,10 @@ describe('GraphQL-HTTP tests', () => {
       const req = request(app.listen())
         .post(urlString());
       req.write(new Buffer('{ test(who: "World") }'));
-      const error = await catchError(req);
+      const response = await req;
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
@@ -839,10 +797,10 @@ describe('GraphQL-HTTP tests', () => {
         .post(urlString())
         .set('Content-Type', 'application/graphql');
       req.write(new Buffer('{ test(who: "World") }'));
-      const error = await catchError(req);
+      const response = await req;
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
@@ -968,15 +926,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: '{nonNullThrower}',
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{nonNullThrower}',
+        }));
 
-      expect(error.response.status).to.equal(500);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(500);
+      expect(JSON.parse(response.text)).to.deep.equal({
         data: null,
         errors: [ {
           message: 'Throws!',
@@ -1046,15 +1002,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema,
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: 'syntaxerror',
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: 'syntaxerror',
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ {
           message: 'Syntax Error GraphQL request (1:1) ' +
             'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n',
@@ -1070,12 +1024,11 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema,
       })));
 
-      const error = await catchError(
-        request(app.listen()).get(urlString())
-      );
+      const response = await request(app.listen())
+        .get(urlString());
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
@@ -1087,15 +1040,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema,
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/json')
-          .send('[]')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/json')
+        .send('[]');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'POST body sent invalid JSON.' } ]
       });
     });
@@ -1107,15 +1058,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema,
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/json')
-          .send('{"query":')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/json')
+        .send('{"query":');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'POST body sent invalid JSON.' } ]
       });
     });
@@ -1127,17 +1076,15 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString({
-            variables: JSON.stringify({ who: 'Dolly' })
-          }))
-          .set('Content-Type', 'text/plain')
-          .send('query helloWho($who: String){ test(who: $who) }')
-      );
+      const response = await request(app.listen())
+        .post(urlString({
+          variables: JSON.stringify({ who: 'Dolly' })
+        }))
+        .set('Content-Type', 'text/plain')
+        .send('query helloWho($who: String){ test(who: $who) }');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
@@ -1149,15 +1096,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/graphql; charset=ascii')
-          .send('{ test(who: "World") }')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql; charset=ascii')
+        .send('{ test(who: "World") }');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported charset "ASCII".' } ]
       });
     });
@@ -1169,15 +1114,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/graphql; charset=utf-53')
-          .send('{ test(who: "World") }')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql; charset=utf-53')
+        .send('{ test(who: "World") }');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported charset "UTF-53".' } ]
       });
     });
@@ -1189,15 +1132,13 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Encoding', 'garbage')
-          .send('!@#$%^*(&^$%#@')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Encoding', 'garbage')
+        .send('!@#$%^*(&^$%#@');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported content-encoding "garbage".' } ]
       });
     });
@@ -1209,16 +1150,14 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            variables: 'who:You',
-            query: 'query helloWho($who: String){ test(who: $who) }'
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          variables: 'who:You',
+          query: 'query helloWho($who: String){ test(who: $who) }'
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Variables are invalid JSON.' } ]
       });
     });
@@ -1230,14 +1169,12 @@ describe('GraphQL-HTTP tests', () => {
         schema: TestSchema
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .put(urlString({ query: '{test}' }))
-      );
+      const response = await request(app.listen())
+        .put(urlString({ query: '{test}' }));
 
-      expect(error.response.status).to.equal(405);
-      expect(error.response.headers.allow).to.equal('GET, POST');
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(response.headers.allow).to.equal('GET, POST');
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'GraphQL only supports GET and POST requests.' }
         ]
@@ -1334,15 +1271,13 @@ describe('GraphQL-HTTP tests', () => {
         graphiql: true
       })));
 
-      const error = await catchError(
-        request(app.listen())
-          .get(urlString({ query: '</script><script>alert(1)</script>' }))
-          .set('Accept', 'text/html')
-      );
+      const response = await request(app.listen())
+        .get(urlString({ query: '</script><script>alert(1)</script>' }))
+        .set('Accept', 'text/html');
 
-      expect(error.response.status).to.equal(400);
-      expect(error.response.type).to.equal('text/html');
-      expect(error.response.text).to.not.include('</script><script>alert(1)</script>');
+      expect(response.status).to.equal(400);
+      expect(response.type).to.equal('text/html');
+      expect(response.text).to.not.include('</script><script>alert(1)</script>');
     });
 
     it('escapes HTML in variables within GraphiQL', async () => {
@@ -1525,15 +1460,13 @@ describe('GraphQL-HTTP tests', () => {
         pretty: true,
       })));
 
-      const error = await catchError(
-        request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{thrower}',
-        }))
-      );
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
             message: 'AlwaysInvalidRule was really invalid!'

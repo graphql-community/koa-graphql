@@ -24,14 +24,10 @@ describe('Useful errors when incorrectly used', () => {
 
     app.use(mount('/graphql', graphqlHTTP(() => null)));
 
-    let caughtError;
-    try {
-      await request(app.listen()).get('/graphql?query={test}');
-    } catch (error) {
-      caughtError = error;
-    }
-    expect(caughtError.response.status).to.equal(500);
-    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+    const response = await request(app.listen()).get('/graphql?query={test}');
+
+    expect(response.status).to.equal(500);
+    expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
         { message:
           'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.' }
@@ -44,15 +40,10 @@ describe('Useful errors when incorrectly used', () => {
 
     app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve(null))));
 
-    let caughtError;
-    try {
-      await request(app.listen()).get('/graphql?query={test}');
-    } catch (error) {
-      caughtError = error;
-    }
+    const response = await request(app.listen()).get('/graphql?query={test}');
 
-    expect(caughtError.response.status).to.equal(500);
-    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+    expect(response.status).to.equal(500);
+    expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
         { message:
           'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.' }
@@ -65,15 +56,11 @@ describe('Useful errors when incorrectly used', () => {
 
     app.use(mount('/graphql', graphqlHTTP(() => ({}))));
 
-    let caughtError;
-    try {
-      await request(app.listen()).get('/graphql?query={test}');
-    } catch (error) {
-      caughtError = error;
-    }
 
-    expect(caughtError.response.status).to.equal(500);
-    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+    const response = await request(app.listen()).get('/graphql?query={test}');
+
+    expect(response.status).to.equal(500);
+    expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
         { message: 'GraphQL middleware options must contain a schema.' }
       ]
@@ -85,15 +72,10 @@ describe('Useful errors when incorrectly used', () => {
 
     app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve({}))));
 
-    let caughtError;
-    try {
-      await request(app.listen()).get('/graphql?query={test}');
-    } catch (error) {
-      caughtError = error;
-    }
+    const response = await request(app.listen()).get('/graphql?query={test}');
 
-    expect(caughtError.response.status).to.equal(500);
-    expect(JSON.parse(caughtError.response.text)).to.deep.equal({
+    expect(response.status).to.equal(500);
+    expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
         { message: 'GraphQL middleware options must contain a schema.' }
       ]

@@ -37,7 +37,7 @@ app.listen(4000);
 For Koa 2, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
 
 ```js
-const koa = require('koa');
+const Koa = require('koa');
 const mount = require('koa-mount'); // koa-mount@2.x
 const convert = require('koa-convert');
 const graphqlHTTP = require('koa-graphql');
@@ -53,7 +53,7 @@ app.use(mount('/graphql', convert(graphqlHTTP({
 For Koa 2 with koa-router@7
 
 ```js
-const koa = require('koa');
+const Koa = require('koa');
 const Router = require('koa-router'); // koa-router@7.x
 const convert = require('koa-convert');
 const graphqlHTTP = require('koa-graphql');

@@ -2,17 +2,17 @@
 
 type GraphiQLData = {
   query: ?string,
-  variables: ?Object,
+  variables: ?{[param: string]: mixed},
   operationName: ?string,
-  result?: Object
+  result?: mixed
 };
 
 // Current latest version of GraphiQL.
-const GRAPHIQL_VERSION = '0.6.6';
+const GRAPHIQL_VERSION = '0.9.3';
 
-// Ensures string values are save to be used within a <script> tag.
-function safeSerialize(data) {
-  return data ? JSON.stringify(data).replace(/\//g, '\\/') : null;
+// Ensures string values are safe to be used within a <script> tag.
+function safeSerialize(data): string {
+  return data ? JSON.stringify(data).replace(/\//g, '\\/') : 'undefined';
 }
 
 /**
@@ -41,6 +41,9 @@ add "&raw" to the end of the URL within a browser.
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <title>GraphiQL</title>
+  <meta name="robots" content="noindex" />
   <style>
     html, body {
       height: 100%;
@@ -51,8 +54,8 @@ add "&raw" to the end of the URL within a browser.
   </style>
   <link href="//cdn.jsdelivr.net/graphiql/${GRAPHIQL_VERSION}/graphiql.css" rel="stylesheet" />
   <script src="//cdn.jsdelivr.net/fetch/0.9.0/fetch.min.js"></script>
-  <script src="//cdn.jsdelivr.net/react/0.14.7/react.min.js"></script>
-  <script src="//cdn.jsdelivr.net/react/0.14.7/react-dom.min.js"></script>
+  <script src="//cdn.jsdelivr.net/react/15.4.2/react.min.js"></script>
+  <script src="//cdn.jsdelivr.net/react/15.4.2/react-dom.min.js"></script>
   <script src="//cdn.jsdelivr.net/graphiql/${GRAPHIQL_VERSION}/graphiql.min.js"></script>
 </head>
 <body>
@@ -129,7 +132,7 @@ add "&raw" to the end of the URL within a browser.
     }
 
     // Render <GraphiQL /> into the body.
-    React.render(
+    ReactDOM.render(
       React.createElement(GraphiQL, {
         fetcher: graphQLFetcher,
         onEditQuery: onEditQuery,

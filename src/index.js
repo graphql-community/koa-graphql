@@ -9,32 +9,44 @@ import {
   getOperationAST,
   specifiedRules
 } from 'graphql';
+import { getGraphQLParams } from 'express-graphql';
 import httpError from 'http-errors';
 
-import { parseBody as _parseBody } from './parseBody';
 import { renderGraphiQL } from './renderGraphiQL';
-import thenify from 'thenify';
 
+import type {
+  GraphQLError,
+  GraphQLSchema
+} from 'graphql';
 import type { Context, Request } from 'koa';
-
-const parseBody = thenify(_parseBody);
+import type { RequestInfo, GraphQLParams } from 'express-graphql';
 
 
 /**
- * Used to configure the graphQLHTTP middleware by providing a schema
+ * Used to configure the graphqlHTTP middleware by providing a schema
  * and other configuration options.
+ *
+ * Options can be provided as an Object, a Promise for an Object, or a Function
+ * that returns an Object or a Promise for an Object.
  */
-export type Options = ((req: Request, ctx: Context) => OptionsObj) | OptionsObj
-export type OptionsObj = {
+export type Options =
+  ((request: Request, ctx: Context) => OptionsResult) | OptionsResult;
+export type OptionsResult = OptionsData | Promise<OptionsData>;
+export type OptionsData = {
   /**
    * A GraphQL schema from graphql-js.
    */
-  schema: Object,
+  schema: GraphQLSchema,
+
+  /**
+   * A value to pass as the context to the graphql() function.
+   */
+  context?: ?mixed,
 
   /**
    * An object to pass as the rootValue to the graphql() function.
    */
-  rootValue?: ?Object,
+  rootValue?: ?mixed,
 
   /**
    * A boolean to configure whether the output should be pretty-printed.
@@ -46,13 +58,25 @@ export type OptionsObj = {
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
    */
-  formatError?: ?Function,
+  formatError?: ?(error: GraphQLError) => mixed,
 
   /**
    * An optional array of validation rules that will be applied on the document
    * in additional to those defined by the GraphQL spec.
    */
-  validationRules?: ?Array<any>,
+  validationRules?: ?Array<mixed>,
+
+  /**
+   * An optional function for adding additional metadata to the GraphQL response
+   * as a key-value object. The result will be added to "extensions" field in
+   * the resulting JSON. This is often a useful place to add development time
+   * info such as the runtime of a query or the amount of resources consumed.
+   *
+   * Information about the request is provided to be used.
+   *
+   * This function may be async.
+   */
+  extensions?: ?(info: RequestInfo) => {[key: string]: mixed};
 
   /**
    * A boolean to optionally enable GraphiQL mode.
@@ -60,31 +84,35 @@ export type OptionsObj = {
   graphiql?: ?boolean,
 };
 
-type Middleware = () => Generator<Promise, void, void>;
+type Middleware = (ctx: Context) => Promise<void>;
 
 /**
  * Middleware for express; takes an options object or function as input to
  * configure behavior, and returns an express middleware.
  */
-export default function graphqlHTTP(options: Options) : Middleware {
+module.exports = graphqlHTTP;
+function graphqlHTTP(options: Options): Middleware {
   if (!options) {
     throw new Error('GraphQL middleware requires options.');
   }
 
-  return function *middleware() {
-    const req = this.req;
-    const request = this.request;
-    const response = this.response;
+  return async function middleware(ctx): Promise<void> {
+    const req = ctx.req;
+    const request = ctx.request;
+    const response = ctx.response;
 
     // Higher scoped variables are referred to at various stages in the
-    // asyncronous state machine below.
+    // asynchronous state machine below.
     let schema;
+    let context;
     let rootValue;
     let pretty;
     let graphiql;
     let formatErrorFn;
+    let extensionsFn;
     let showGraphiQL;
     let query;
+    let documentAST;
     let variables;
     let operationName;
     let validationRules;
@@ -92,17 +120,43 @@ export default function graphqlHTTP(options: Options) : Middleware {
     let result;
 
     try {
-      // Get GraphQL options given this request.
-      const optionsObj = getOptions(options, request, this);
-      schema = optionsObj.schema;
-      rootValue = optionsObj.rootValue;
-      pretty = optionsObj.pretty;
-      graphiql = optionsObj.graphiql;
-      formatErrorFn = optionsObj.formatError;
+      // Promises are used as a mechanism for capturing any thrown errors during
+      // the asynchronous process below.
+
+      // Resolve the Options to get OptionsData.
+      const optionsData = await Promise.resolve(
+        typeof options === 'function' ?
+          options(request, response, ctx) :
+          options
+      );
+
+      // Assert that optionsData is in fact an Object.
+      if (!optionsData || typeof optionsData !== 'object') {
+        throw new Error(
+          'GraphQL middleware option function must return an options object ' +
+          'or a promise which will be resolved to an options object.'
+        );
+      }
+
+      // Assert that schema is required.
+      if (!optionsData.schema) {
+        throw new Error(
+          'GraphQL middleware options must contain a schema.'
+        );
+      }
+
+      // Collect information from the options data object.
+      schema = optionsData.schema;
+      context = optionsData.context || ctx;
+      rootValue = optionsData.rootValue;
+      pretty = optionsData.pretty;
+      graphiql = optionsData.graphiql;
+      formatErrorFn = optionsData.formatError;
+      extensionsFn = optionsData.extensions;
 
       validationRules = specifiedRules;
-      if (optionsObj.validationRules) {
-        validationRules = validationRules.concat(optionsObj.validationRules);
+      if (optionsData.validationRules) {
+        validationRules = validationRules.concat(optionsData.validationRules);
       }
 
       // GraphQL HTTP only supports GET and POST methods.
@@ -111,21 +165,19 @@ export default function graphqlHTTP(options: Options) : Middleware {
         throw httpError(405, 'GraphQL only supports GET and POST requests.');
       }
 
-      // Parse the Request body.
-      let data = yield parseBody(req, request);
+      // Use request.body when req.body is undefined.
+      req.body = req.body || request.body;
 
-      // Use promises as a mechanism for capturing any thrown errors during the
-      // asyncronous process.
-      result = yield new Promise(resolve => {
-        data = data || {};
-        showGraphiQL = graphiql && canDisplayGraphiQL(request, data);
+      // Parse the Request to get GraphQL request parameters.
+      const params: GraphQLParams = await getGraphQLParams(req);
 
-        // Get GraphQL params from the request and POST body data.
-        const params = getGraphQLParams(request, data);
-        query = params.query;
-        variables = params.variables;
-        operationName = params.operationName;
+      // Get GraphQL params from the request and POST body data.
+      query = params.query;
+      variables = params.variables;
+      operationName = params.operationName;
+      showGraphiQL = graphiql && canDisplayGraphiQL(request, params);
 
+      result = await new Promise(resolve => {
         // If there is no query, but GraphiQL will be displayed, do not produce
         // a result, otherwise return a 400: Bad Request.
         if (!query) {
@@ -139,7 +191,6 @@ export default function graphqlHTTP(options: Options) : Middleware {
         const source = new Source(query, 'GraphQL request');
 
         // Parse source to AST, reporting any syntax error.
-        let documentAST;
         try {
           documentAST = parse(source);
         } catch (syntaxError) {
@@ -173,7 +224,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
             throw httpError(
               405,
               `Can only perform a ${operationAST.operation} operation ` +
-              `from a POST request.`
+              'from a POST request.'
             );
           }
         }
@@ -184,6 +235,7 @@ export default function graphqlHTTP(options: Options) : Middleware {
             schema,
             documentAST,
             rootValue,
+            context,
             variables,
             operationName
           ));
@@ -193,94 +245,68 @@ export default function graphqlHTTP(options: Options) : Middleware {
           resolve({ errors: [ contextError ] });
         }
       });
+
+      // Collect and apply any metadata extensions if a function was provided.
+      // http://facebook.github.io/graphql/#sec-Response-Format
+      if (result && extensionsFn) {
+        result = await Promise.resolve(extensionsFn({
+          document: documentAST,
+          variables,
+          operationName,
+          result,
+        }))
+        .then(extensions => {
+          if (extensions && typeof extensions === 'object') {
+            (result: any).extensions = extensions;
+          }
+          return result;
+        });
+      }
     } catch (error) {
       // If an error was caught, report the httpError status, or 500.
       response.status = error.status || 500;
       result = { errors: [ error ] };
     }
 
+    // If no data was included in the result, that indicates a runtime query
+    // error, indicate as such with a generic status code.
+    // Note: Information about the error itself will still be contained in
+    // the resulting JSON payload.
+    // http://facebook.github.io/graphql/#sec-Data
+    if (result && result.data === null) {
+      response.status = 500;
+    }
     // Format any encountered errors.
     if (result && result.errors) {
-      result.errors = result.errors.map(formatErrorFn || formatError);
+      (result: any).errors = result.errors.map(formatErrorFn || formatError);
     }
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      response.type = 'text/html';
-      response.body = renderGraphiQL({
-        query, variables, operationName, result
+      const payload = renderGraphiQL({
+        query, variables,
+        operationName, result
       });
+      response.type = 'text/html';
+      response.body = payload;
     } else {
       // Otherwise, present JSON directly.
+      const payload = JSON.stringify(result, null, pretty ? 2 : 0);
       response.type = 'application/json';
-      response.body = JSON.stringify(result, null, pretty ? 2 : 0);
+      response.body = payload;
     }
   };
 }
 
 /**
- * Get the options that the middleware was configured with, sanity
- * checking them.
- */
-function getOptions(
-  options: Options,
-  request: Request,
-  context: Context
-): OptionsObj {
-  var optionsData = typeof options === 'function' ?
-                  options(request, context) : options;
-
-  if (!optionsData || typeof optionsData !== 'object') {
-    throw new Error(
-      'GraphQL middleware option function must return an options object.'
-    );
-  }
-
-  if (!optionsData.schema) {
-    throw new Error(
-      'GraphQL middleware options must contain a schema.'
-    );
-  }
-
-  return optionsData;
-}
-
-type GraphQLParams = {
-  query: ?string;
-  variables: ?Object;
-  operationName: ?string;
-}
-
-/**
- * Helper function to get the GraphQL params from the request.
- */
-function getGraphQLParams(request: Request, data: Object): GraphQLParams {
-  // GraphQL Query string.
-  var query = request.query.query || data.query;
-
-  // Parse the variables if needed.
-  var variables = request.query.variables || data.variables;
-  if (variables && typeof variables === 'string') {
-    try {
-      variables = JSON.parse(variables);
-    } catch (error) {
-      throw httpError(400, 'Variables are invalid JSON.');
-    }
-  }
-
-  // Name of GraphQL operation to execute.
-  var operationName = request.query.operationName || data.operationName;
-
-  return { query, variables, operationName };
-}
-
-/**
  * Helper function to determine if GraphiQL can be displayed.
  */
-function canDisplayGraphiQL(request: Request, data: Object): boolean {
+function canDisplayGraphiQL(
+  request: Request,
+  params: GraphQLParams
+): boolean {
   // If `raw` exists, GraphiQL mode is not enabled.
-  var raw = request.query.raw !== undefined || data.raw !== undefined;
   // Allowed to show GraphiQL if not requested as raw and this request
   // prefers HTML over JSON.
-  return !raw && request.accepts([ 'json', 'html' ]) === 'html';
+  return !params.raw && request.accepts([ 'json', 'html' ]) === 'html';
 }

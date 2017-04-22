@@ -12,7 +12,6 @@ import multer from 'multer';
 import multerWrapper from './helpers/koa-multer';
 import request from 'supertest-as-promised';
 import Koa from 'koa';
-import convert from 'koa-convert';
 import mount from 'koa-mount';
 import session from 'koa-session';
 import parse from 'co-body';
@@ -28,7 +27,7 @@ import {
 } from 'graphql';
 import graphqlHTTP from '../';
 
-var QueryRootType = new GraphQLObjectType({
+const QueryRootType = new GraphQLObjectType({
   name: 'QueryRoot',
   fields: {
     test: {
@@ -38,16 +37,30 @@ var QueryRootType = new GraphQLObjectType({
           type: GraphQLString
         }
       },
-      resolve: (root, { who }) => 'Hello ' + (who || 'World')
+      resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World')
     },
-    thrower: {
+    nonNullThrower: {
       type: new GraphQLNonNull(GraphQLString),
       resolve: () => { throw new Error('Throws!'); }
-    }
+    },
+    thrower: {
+      type: GraphQLString,
+      resolve: () => { throw new Error('Throws!'); }
+    },
+    context: {
+      type: GraphQLString,
+      resolve: (obj, args, context) => context
+    },
+    contextDotFoo: {
+      type: GraphQLString,
+      resolve: (obj, args, context) => {
+        return (context: any).foo;
+      },
+    },
   }
 });
 
-var TestSchema = new GraphQLSchema({
+const TestSchema = new GraphQLSchema({
   query: QueryRootType,
   mutation: new GraphQLObjectType({
     name: 'MutationRoot',
@@ -60,24 +73,12 @@ var TestSchema = new GraphQLSchema({
   })
 });
 
-function urlString(urlParams?: ?Object) {
-  var string = '/graphql';
+function urlString(urlParams?: ?{[param: string]: mixed}) {
+  let string = '/graphql';
   if (urlParams) {
     string += ('?' + stringify(urlParams));
   }
   return string;
-}
-
-function catchError(p: any): Promise<any> {
-  return p.then(
-    () => { throw new Error('Expected to catch error.'); },
-    error => {
-      if (!(error instanceof Error)) {
-        throw new Error('Expected to catch error.');
-      }
-      return error;
-    }
-  );
 }
 
 function promiseTo(fn) {
@@ -88,35 +89,15 @@ function promiseTo(fn) {
 
 describe('test harness', () => {
 
-  it('expects to catch errors', async () => {
-    var caught;
-    try {
-      await catchError(Promise.resolve());
-    } catch (error) {
-      caught = error;
-    }
-    expect(caught && caught.message).to.equal('Expected to catch error.');
-  });
-
-  it('expects to catch actual errors', async () => {
-    var caught;
-    try {
-      await catchError(Promise.reject('not a real error'));
-    } catch (error) {
-      caught = error;
-    }
-    expect(caught && caught.message).to.equal('Expected to catch error.');
-  });
-
   it('resolves callback promises', async () => {
-    var resolveValue = {};
-    var result = await promiseTo(cb => cb(null, resolveValue));
+    const resolveValue = {};
+    const result = await promiseTo(cb => cb(null, resolveValue));
     expect(result).to.equal(resolveValue);
   });
 
   it('rejects callback promises with errors', async () => {
-    var rejectError = new Error();
-    var caught;
+    const rejectError = new Error();
+    let caught;
     try {
       await promiseTo(cb => cb(rejectError));
     } catch (error) {
@@ -131,13 +112,13 @@ describe('test harness', () => {
 describe('GraphQL-HTTP tests', () => {
   describe('GET functionality', () => {
     it('allows GET with query param', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{test}'
         }));
@@ -148,13 +129,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows GET with variable values', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: 'query helloWho($who: String){ test(who: $who) }',
           variables: JSON.stringify({ who: 'Dolly' })
@@ -166,13 +147,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows GET with operation name', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: `
             query helloYou { test(who: "You"), ...shared }
@@ -194,19 +175,17 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Reports validation errors', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: `{ test, unknownOne, unknownTwo }`
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{ test, unknownOne, unknownTwo }'
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
             message: 'Cannot query field "unknownOne" on type "QueryRoot".',
@@ -221,22 +200,20 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when missing operation name', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: `
-              query TestQuery { test }
-              mutation TestMutation { writeTest { test } }
-            `
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: `
+            query TestQuery { test }
+            mutation TestMutation { writeTest { test } }
+          `
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Must provide operation name if query contains multiple operations.' }
         ]
@@ -244,19 +221,17 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when sending a mutation via GET', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: 'mutation TestMutation { writeTest { test } }'
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: 'mutation TestMutation { writeTest { test } }'
+        }));
 
-      expect(error.response.status).to.equal(405);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Can only perform a mutation operation from a POST request.' }
         ]
@@ -264,23 +239,21 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when selecting a mutation within a GET', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            operationName: 'TestMutation',
-            query: `
-              query TestQuery { test }
-              mutation TestMutation { writeTest { test } }
-            `
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestMutation',
+          query: `
+            query TestQuery { test }
+            mutation TestMutation { writeTest { test } }
+          `
+        }));
 
-      expect(error.response.status).to.equal(405);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'Can only perform a mutation operation from a POST request.' }
         ]
@@ -288,11 +261,11 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows a mutation to exist within a GET', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           operationName: 'TestQuery',
           query: `
@@ -309,17 +282,105 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+
+    it('Allows passing in a context', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        context: 'testValue'
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestQuery',
+          query: `
+            query TestQuery { context }
+          `
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          context: 'testValue'
+        }
+      });
+    });
+
+    it('Uses ctx as context by default', async () => {
+      const app = new Koa();
+
+      // Middleware that adds ctx.foo to every request
+      app.use((ctx, next) => {
+        ctx.foo = 'bar';
+        return next();
+      });
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          operationName: 'TestQuery',
+          query: `
+            query TestQuery { contextDotFoo }
+          `
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          contextDotFoo: 'bar'
+        }
+      });
+    });
+
+    it('Allows returning an options Promise', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP(() => Promise.resolve({
+        schema: TestSchema,
+      }))));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{test}'
+        }));
+
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World"}}'
+      );
+    });
+
+    it('Catches errors thrown from options function', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP(() => {
+        throw new Error('I did something wrong');
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{test}'
+        }));
+
+      expect(response.status).to.equal(500);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"I did something wrong"}]}'
+      );
+    });
   });
 
   describe('POST functionality', () => {
     it('allows POST with JSON encoding', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString()).send({ query: '{test}' });
 
       expect(response.text).to.equal(
@@ -328,11 +389,11 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows sending a mutation via POST', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send({ query: 'mutation TestMutation { writeTest { test } }' });
 
@@ -343,13 +404,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with url encoding', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send(stringify({ query: '{test}' }));
 
@@ -359,13 +420,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with string variables', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send({
           query: 'query helloWho($who: String){ test(who: $who) }',
@@ -378,13 +439,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with JSON variables', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send({
           query: 'query helloWho($who: String){ test(who: $who) }',
@@ -397,13 +458,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST url encoded query with string variables', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send(stringify({
           query: 'query helloWho($who: String){ test(who: $who) }',
@@ -416,13 +477,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with GET variable values', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString({
           variables: JSON.stringify({ who: 'Dolly' })
         }))
@@ -434,13 +495,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST url encoded query with GET variable values', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString({
           variables: JSON.stringify({ who: 'Dolly' })
         }))
@@ -454,13 +515,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST raw text query with GET variable values', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString({
           variables: JSON.stringify({ who: 'Dolly' })
         }))
@@ -473,13 +534,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with operation name', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .send({
           query: `
@@ -502,13 +563,13 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with GET operation name', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString({
           operationName: 'helloWorld'
         }))
@@ -531,17 +592,17 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows other UTF charsets', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql; charset=utf-16');
       req.write(new Buffer('{ test(who: "World") }', 'utf16le'));
-      var response = await req;
+      const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -551,22 +612,22 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows gzipped POST bodies', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var data = { query: '{ test(who: "World") }' };
-      var json = JSON.stringify(data);
-      var gzippedJson = await promiseTo(cb => zlib.gzip(json, cb));
+      const data = { query: '{ test(who: "World") }' };
+      const json = JSON.stringify(data);
+      const gzippedJson = await promiseTo(cb => zlib.gzip(json, cb));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/json')
         .set('Content-Encoding', 'gzip');
       req.write(gzippedJson);
-      var response = await req;
+      const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -576,22 +637,22 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows deflated POST bodies', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var data = { query: '{ test(who: "World") }' };
-      var json = JSON.stringify(data);
-      var deflatedJson = await promiseTo(cb => zlib.deflate(json, cb));
+      const data = { query: '{ test(who: "World") }' };
+      const json = JSON.stringify(data);
+      const deflatedJson = await promiseTo(cb => zlib.deflate(json, cb));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/json')
         .set('Content-Encoding', 'deflate');
       req.write(deflatedJson);
-      var response = await req;
+      const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -607,7 +668,7 @@ describe('GraphQL-HTTP tests', () => {
       // together.
 
       // A simple schema which includes a mutation.
-      var UploadedFileType = new GraphQLObjectType({
+      const UploadedFileType = new GraphQLObjectType({
         name: 'UploadedFile',
         fields: {
           originalname: { type: GraphQLString },
@@ -615,7 +676,7 @@ describe('GraphQL-HTTP tests', () => {
         }
       });
 
-      var TestMutationSchema = new GraphQLSchema({
+      const TestMutationSchema = new GraphQLSchema({
         query: new GraphQLObjectType({
           name: 'QueryRoot',
           fields: {
@@ -638,23 +699,23 @@ describe('GraphQL-HTTP tests', () => {
         })
       });
 
-      var app = new Koa();
+      const app = new Koa();
 
       // Multer provides multipart form data parsing.
-      var storage = multer.memoryStorage();
+      const storage = multer.memoryStorage();
       app.use(mount(urlString(), multerWrapper({ storage }).single('file')));
 
       // Providing the request as part of `rootValue` allows it to
       // be accessible from within Schema resolve functions.
-      app.use(mount(urlString(), convert(graphqlHTTP((req, ctx) => {
+      app.use(mount(urlString(), graphqlHTTP((req, ctx) => {
         expect(ctx.req.file.originalname).to.equal('http-test.js');
         return {
           schema: TestMutationSchema,
           rootValue: { request: ctx.req }
         };
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .post(urlString())
         .field('query', `mutation TestMutation {
           uploadFile { originalname, mimetype }
@@ -672,7 +733,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows for pre-parsed POST using application/graphql', async () => {
-      var app = new Koa();
+      const app = new Koa();
       app.use(async function (ctx, next) {
         if (ctx.is('application/graphql')) {
           ctx.request.body = await parse.text(ctx);
@@ -680,13 +741,13 @@ describe('GraphQL-HTTP tests', () => {
         await next();
       });
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql');
       req.write(new Buffer('{ test(who: "World") }'));
-      var response = await req;
+      const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -696,7 +757,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('does not accept unknown pre-parsed POST string', async () => {
-      var app = new Koa();
+      const app = new Koa();
       app.use(async function (ctx, next) {
         if (ctx.is('*/*')) {
           ctx.request.body = await parse.text(ctx);
@@ -704,24 +765,24 @@ describe('GraphQL-HTTP tests', () => {
         await next();
       });
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString());
       req.write(new Buffer('{ test(who: "World") }'));
-      var error = await catchError(req);
+      const response = await req;
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
 
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
-      var app = new Koa();
+      const app = new Koa();
       app.use(async function (ctx, next) {
         if (ctx.is('*/*')) {
-          var req = ctx.req;
+          const req = ctx.req;
           ctx.request.body = await getRawBody(req, {
             length: req.headers['content-length'],
             limit: '1mb',
@@ -731,16 +792,16 @@ describe('GraphQL-HTTP tests', () => {
         await next();
       });
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var req = request(app.listen())
+      const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql');
       req.write(new Buffer('{ test(who: "World") }'));
-      var error = await catchError(req);
+      const response = await req;
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
@@ -748,14 +809,14 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Pretty printing', () => {
     it('supports pretty printing', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         pretty: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{test}'
         }));
@@ -770,16 +831,16 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports pretty printing configured by request', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP(req => {
+      app.use(mount(urlString(), graphqlHTTP(req => {
         return {
           schema: TestSchema,
           pretty: req.query.pretty === '1'
         };
-      }))));
+      })));
 
-      var defaultResponse = await request(app.listen())
+      const defaultResponse = await request(app.listen())
         .get(urlString({
           query: '{test}'
         }));
@@ -788,7 +849,7 @@ describe('GraphQL-HTTP tests', () => {
         '{"data":{"test":"Hello World"}}'
       );
 
-      var prettyResponse = await request(app.listen())
+      const prettyResponse = await request(app.listen())
         .get(urlString({
           query: '{test}',
           pretty: 1
@@ -802,7 +863,7 @@ describe('GraphQL-HTTP tests', () => {
         '}'
       );
 
-      var unprettyResponse = await request(app.listen())
+      const unprettyResponse = await request(app.listen())
         .get(urlString({
           query: '{test}',
           pretty: 0
@@ -814,47 +875,98 @@ describe('GraphQL-HTTP tests', () => {
     });
   });
 
+  it('will send request, response and context when using thunk', async () => {
+    const app = new Koa();
+
+    let hasRequest = false;
+    let hasResponse = false;
+    let hasContext = false;
+
+    app.use(mount(urlString(), graphqlHTTP((reqest, response, context) => {
+      if (request) {
+        hasRequest = true;
+      }
+      if (response) {
+        hasResponse = true;
+      }
+      if (context) {
+        hasContext = true;
+      }
+      return { schema: TestSchema };
+    })));
+
+    await request(app.listen()).get(urlString({ query: '{test}' }));
+
+    expect(hasRequest).to.equal(true);
+    expect(hasResponse).to.equal(true);
+    expect(hasContext).to.equal(true);
+  });
+
   describe('Error handling functionality', () => {
     it('handles field errors caught by GraphQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{thrower}',
         }));
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
+        data: { thrower: null },
+        errors: [ {
+          message: 'Throws!',
+          locations: [ { line: 1, column: 2 } ],
+          path: [ 'thrower' ]
+        } ]
+      });
+    });
+
+    it('handles query errors from non-null top field errors', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{nonNullThrower}',
+        }));
+
+      expect(response.status).to.equal(500);
+      expect(JSON.parse(response.text)).to.deep.equal({
         data: null,
         errors: [ {
           message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ]
+          locations: [ { line: 1, column: 2 } ],
+          path: [ 'nonNullThrower' ]
         } ]
       });
     });
 
     it('allows for custom error formatting to sanitize', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         formatError(error) {
           return { message: 'Custom error format: ' + error.message };
         }
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{thrower}',
         }));
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
-        data: null,
+        data: { thrower: null },
         errors: [ {
           message: 'Custom error format: Throws!',
         } ]
@@ -862,9 +974,9 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows for custom error formatting to elaborate', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         formatError(error) {
           return {
@@ -873,16 +985,16 @@ describe('GraphQL-HTTP tests', () => {
             stack: 'Stack trace'
           };
         }
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{thrower}',
         }));
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
-        data: null,
+        data: { thrower: null },
         errors: [ {
           message: 'Throws!',
           locations: [ { line: 1, column: 2 } ],
@@ -892,204 +1004,185 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles syntax errors caught by GraphQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            query: 'syntaxerror',
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          query: 'syntaxerror',
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ {
           message: 'Syntax Error GraphQL request (1:1) ' +
-            'Unexpected Name \"syntaxerror\"\n\n1: syntaxerror\n   ^\n',
+            'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n',
           locations: [ { line: 1, column: 1 } ]
         } ]
       });
     });
 
     it('handles errors caused by a lack of query', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen()).get(urlString())
-      );
+      const response = await request(app.listen())
+        .get(urlString());
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
 
     it('handles invalid JSON bodies', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/json')
-          .send('[]')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/json')
+        .send('[]');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'POST body sent invalid JSON.' } ]
       });
     });
 
     it('handles incomplete JSON bodies', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/json')
-          .send('{"query":')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/json')
+        .send('{"query":');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'POST body sent invalid JSON.' } ]
       });
     });
 
     it('handles plain POST text', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString({
-            variables: JSON.stringify({ who: 'Dolly' })
-          }))
-          .set('Content-Type', 'text/plain')
-          .send('query helloWho($who: String){ test(who: $who) }')
-      );
+      const response = await request(app.listen())
+        .post(urlString({
+          variables: JSON.stringify({ who: 'Dolly' })
+        }))
+        .set('Content-Type', 'text/plain')
+        .send('query helloWho($who: String){ test(who: $who) }');
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Must provide query string.' } ]
       });
     });
 
     it('handles unsupported charset', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/graphql; charset=ascii')
-          .send('{ test(who: "World") }')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql; charset=ascii')
+        .send('{ test(who: "World") }');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported charset "ASCII".' } ]
       });
     });
 
     it('handles unsupported utf charset', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Type', 'application/graphql; charset=utf-53')
-          .send('{ test(who: "World") }')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/graphql; charset=utf-53')
+        .send('{ test(who: "World") }');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported charset "UTF-53".' } ]
       });
     });
 
     it('handles unknown encoding', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .post(urlString())
-          .set('Content-Encoding', 'garbage')
-          .send('!@#$%^*(&^$%#@')
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Encoding', 'garbage')
+        .send('!@#$%^*(&^$%#@');
 
-      expect(error.response.status).to.equal(415);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(415);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Unsupported content-encoding "garbage".' } ]
       });
     });
 
     it('handles poorly formed variables', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({
-            variables: 'who:You',
-            query: 'query helloWho($who: String){ test(who: $who) }'
-          }))
-      );
+      const response = await request(app.listen())
+        .get(urlString({
+          variables: 'who:You',
+          query: 'query helloWho($who: String){ test(who: $who) }'
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [ { message: 'Variables are invalid JSON.' } ]
       });
     });
 
     it('handles unsupported HTTP methods', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .put(urlString({ query: '{test}' }))
-      );
+      const response = await request(app.listen())
+        .put(urlString({ query: '{test}' }));
 
-      expect(error.response.status).to.equal(405);
-      expect(error.response.headers.allow).to.equal('GET, POST');
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(405);
+      expect(response.headers.allow).to.equal('GET, POST');
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           { message: 'GraphQL only supports GET and POST requests.' }
         ]
@@ -1100,11 +1193,11 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Built-in GraphiQL support', () => {
     it('does not renders GraphiQL if no opt-in', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({ schema: TestSchema }))));
+      app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'text/html');
 
@@ -1116,14 +1209,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('presents GraphiQL when accepting HTML', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'text/html');
 
@@ -1133,14 +1226,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('contains a pre-run response within GraphiQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'text/html');
 
@@ -1154,14 +1247,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('contains a pre-run operation name within GraphiQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: 'query A{a:test} query B{b:test}',
           operationName: 'B'
@@ -1179,33 +1272,31 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('escapes HTML in queries within GraphiQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
-          .get(urlString({ query: '</script><script>alert(1)</script>' }))
-          .set('Accept', 'text/html')
-      );
+      const response = await request(app.listen())
+        .get(urlString({ query: '</script><script>alert(1)</script>' }))
+        .set('Accept', 'text/html');
 
-      expect(error.response.status).to.equal(400);
-      expect(error.response.type).to.equal('text/html');
-      expect(error.response.text).to.not.include('</script><script>alert(1)</script>');
+      expect(response.status).to.equal(400);
+      expect(response.type).to.equal('text/html');
+      expect(response.text).to.not.include('</script><script>alert(1)</script>');
     });
 
     it('escapes HTML in variables within GraphiQL', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen()).get(urlString({
+      const response = await request(app.listen()).get(urlString({
         query: 'query helloWho($who: String) { test(who: $who) }',
         variables: JSON.stringify({
           who: '</script><script>alert(1)</script>'
@@ -1218,14 +1309,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('GraphiQL renders provided variables', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: 'query helloWho($who: String) { test(who: $who) }',
           variables: JSON.stringify({ who: 'Dolly' })
@@ -1242,31 +1333,31 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('GraphiQL accepts an empty query', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString())
         .set('Accept', 'text/html');
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
-      expect(response.text).to.include('response: null');
+      expect(response.text).to.include('response: undefined');
     });
 
     it('GraphiQL accepts a mutation query - does not execute it', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: 'mutation TestMutation { writeTest { test } }'
         }))
@@ -1277,18 +1368,18 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.text).to.include(
         'query: "mutation TestMutation { writeTest { test } }"'
       );
-      expect(response.text).to.include('response: null');
+      expect(response.text).to.include('response: undefined');
     });
 
     it('returns HTML if preferred', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'text/html,application/json');
 
@@ -1299,14 +1390,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('returns JSON if preferred', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'application/json,text/html');
 
@@ -1318,14 +1409,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('prefers JSON if unknown accept', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
         .set('Accept', 'unknown');
 
@@ -1337,14 +1428,14 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('prefers JSON if explicitly requested raw response', async () => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         graphiql: true
-      }))));
+      })));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({ query: '{test}', raw: '' }))
         .set('Accept', 'text/html');
 
@@ -1357,7 +1448,7 @@ describe('GraphQL-HTTP tests', () => {
   });
 
   describe('Custom validation rules', () => {
-    var AlwaysInvalidRule = function (context) {
+    const AlwaysInvalidRule = function (context) {
       return {
         enter() {
           context.reportError(new GraphQLError(
@@ -1369,23 +1460,21 @@ describe('GraphQL-HTTP tests', () => {
     };
 
     it('Do not execute a query if it do not pass the custom validation.', async() => {
-      var app = new Koa();
+      const app = new Koa();
 
-      app.use(mount(urlString(), convert(graphqlHTTP({
+      app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
         validationRules: [ AlwaysInvalidRule ],
         pretty: true,
-      }))));
+      })));
 
-      var error = await catchError(
-        request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{thrower}',
-        }))
-      );
+        }));
 
-      expect(error.response.status).to.equal(400);
-      expect(JSON.parse(error.response.text)).to.deep.equal({
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
             message: 'AlwaysInvalidRule was really invalid!'
@@ -1397,39 +1486,117 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Session support', () => {
     it('supports koa-session', async () => {
-      var SessionAwareGraphQLSchema = new GraphQLSchema({
+      const SessionAwareGraphQLSchema = new GraphQLSchema({
         query: new GraphQLObjectType({
           name: 'MyType',
           fields: {
             myField: {
               type: GraphQLString,
-              resolve(parentValue, _, { rootValue: { session: sess } }) {
-                return sess.id;
+              resolve(parentValue, _, sess) {
+                return (sess: any).id;
               }
             }
           }
         })
       });
-      var app = new Koa();
+      const app = new Koa();
       app.keys = [ 'some secret hurr' ];
-      app.use(convert(session(app)));
+      app.use(session(app));
       app.use(async function (ctx, next) {
         ctx.session.id = 'me';
         await next();
       });
 
-      app.use(mount('/graphql', convert(graphqlHTTP((_, ctx) => ({
+      app.use(mount('/graphql', graphqlHTTP((req, res, ctx) => ({
         schema: SessionAwareGraphQLSchema,
-        rootValue: { session: ctx.session }
-      })))));
+        context: (ctx: any).session
+      }))));
 
-      var response = await request(app.listen())
+      const response = await request(app.listen())
         .get(urlString({
           query: '{myField}'
         }));
 
       expect(response.text).to.equal(
         '{"data":{"myField":"me"}}'
+      );
+    });
+  });
+
+  describe('Custom result extensions', () => {
+    it('allows for adding extensions', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP(() => {
+        const startTime = 1000000000; /* Date.now(); */
+        return {
+          schema: TestSchema,
+          extensions() {
+            return { runTime: 1000000010 /* Date.now() */ - startTime };
+          }
+        };
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(200);
+      expect(response.type).to.equal('application/json');
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World"},"extensions":{"runTime":10}}'
+      );
+    });
+
+    it('extensions have access to initial GraphQL result', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        formatError: () => null,
+        extensions({ result }) {
+          return { preservedErrors: (result: any).errors };
+        }
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({
+          query: '{thrower}',
+        }));
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: { thrower: null },
+        errors: [ null ],
+        extensions: {
+          preservedErrors: [ {
+            message: 'Throws!',
+            locations: [ { line: 1, column: 2 } ],
+            path: [ 'thrower' ]
+          } ]
+        }
+      });
+    });
+
+    it('extension function may be async', async () => {
+      const app = new Koa();
+
+      app.use(mount(urlString(), graphqlHTTP({
+        schema: TestSchema,
+        async extensions() {
+          // Note: you can await arbitrary things here!
+          return { eventually: 42 };
+        }
+      })));
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(200);
+      expect(response.type).to.equal('application/json');
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}'
       );
     });
   });

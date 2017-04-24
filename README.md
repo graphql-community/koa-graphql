@@ -20,11 +20,11 @@ npm install --save koa-graphql
 Mount `koa-graphql` as a route handler:
 
 ```js
-const koa = require('koa');
-const mount = require('koa-mount'); // koa-mount@1.x
+const Koa = require('koa');
+const mount = require('koa-mount');
 const graphqlHTTP = require('koa-graphql');
 
-const app = koa();
+const app = new Koa();
 
 app.use(mount('/graphql', graphqlHTTP({
   schema: MyGraphQLSchema,
@@ -34,39 +34,38 @@ app.use(mount('/graphql', graphqlHTTP({
 app.listen(4000);
 ```
 
-For Koa 2, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
-
-```js
-const Koa = require('koa');
-const mount = require('koa-mount'); // koa-mount@2.x
-const convert = require('koa-convert');
-const graphqlHTTP = require('koa-graphql');
-
-const app = new Koa();
-
-app.use(mount('/graphql', convert(graphqlHTTP({
-  schema: MyGraphQLSchema,
-  graphiql: true
-}))));
-```
-
-For Koa 2 with koa-router@7
+With koa-router@7
 
 ```js
 const Koa = require('koa');
 const Router = require('koa-router'); // koa-router@7.x
-const convert = require('koa-convert');
 const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 const router = new Router();
 
-router.all('/graphql', convert(graphqlHTTP({
+router.all('/graphql', graphqlHTTP({
   schema: MyGraphQLSchema,
   graphiql: true
-})));
+}));
 
 app.use(router.routes()).use(router.allowedMethods());
+```
+
+For Koa 1, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
+
+```js
+const koa = require('koa');
+const mount = require('koa-mount'); // koa-mount@1.x
+const convert = require('koa-convert');
+const graphqlHTTP = require('koa-graphql');
+
+const app = koa();
+
+app.use(mount('/graphql', convert.back(graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: true
+}))));
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
@@ -160,12 +159,12 @@ request object, this means you can use most koa middleware just by inserting it 
 This example uses [`koa-session`][] to provide GraphQL with the currently logged-in session.
 
 ```js
-const koa = require('koa');
+const Koa = require('koa');
 const mount = require('koa-mount');
 const session = require('koa-session');
 const graphqlHTTP = require('koa-graphql');
 
-const app = koa();
+const app = new Koa();
 app.keys = [ 'some secret hurr' ];
 app.use(session(app));
 app.use(function *(next) {
@@ -214,7 +213,7 @@ provided query, which could perhaps be used by your development tools.
 ```js
 const graphqlHTTP = require('koa-graphql');
 
-const app = koa();
+const app = new Koa();
 
 app.keys = [ 'some secret hurr' ];
 app.use(session(app));

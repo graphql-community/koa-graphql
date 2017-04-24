@@ -84,7 +84,7 @@ export type OptionsData = {
   graphiql?: ?boolean,
 };
 
-type Middleware = () => Generator<Promise<mixed>, void, void>;
+type Middleware = (ctx: Context) => Promise<void>;
 
 /**
  * Middleware for express; takes an options object or function as input to
@@ -96,10 +96,10 @@ function graphqlHTTP(options: Options): Middleware {
     throw new Error('GraphQL middleware requires options.');
   }
 
-  return function *middleware() {
-    const req = this.req;
-    const request = this.request;
-    const response = this.response;
+  return async function middleware(ctx): Promise<void> {
+    const req = ctx.req;
+    const request = ctx.request;
+    const response = ctx.response;
 
     // Higher scoped variables are referred to at various stages in the
     // asynchronous state machine below.
@@ -124,9 +124,9 @@ function graphqlHTTP(options: Options): Middleware {
       // the asynchronous process below.
 
       // Resolve the Options to get OptionsData.
-      const optionsData = yield Promise.resolve(
+      const optionsData = await Promise.resolve(
         typeof options === 'function' ?
-          options(request, response, this) :
+          options(request, response, ctx) :
           options
       );
 
@@ -147,7 +147,7 @@ function graphqlHTTP(options: Options): Middleware {
 
       // Collect information from the options data object.
       schema = optionsData.schema;
-      context = optionsData.context || this;
+      context = optionsData.context || ctx;
       rootValue = optionsData.rootValue;
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
@@ -169,7 +169,7 @@ function graphqlHTTP(options: Options): Middleware {
       req.body = req.body || request.body;
 
       // Parse the Request to get GraphQL request parameters.
-      const params: GraphQLParams = yield getGraphQLParams(req);
+      const params: GraphQLParams = await getGraphQLParams(req);
 
       // Get GraphQL params from the request and POST body data.
       query = params.query;
@@ -177,7 +177,7 @@ function graphqlHTTP(options: Options): Middleware {
       operationName = params.operationName;
       showGraphiQL = graphiql && canDisplayGraphiQL(request, params);
 
-      result = yield new Promise(resolve => {
+      result = await new Promise(resolve => {
         // If there is no query, but GraphiQL will be displayed, do not produce
         // a result, otherwise return a 400: Bad Request.
         if (!query) {
@@ -249,7 +249,7 @@ function graphqlHTTP(options: Options): Middleware {
       // Collect and apply any metadata extensions if a function was provided.
       // http://facebook.github.io/graphql/#sec-Response-Format
       if (result && extensionsFn) {
-        result = yield Promise.resolve(extensionsFn({
+        result = await Promise.resolve(extensionsFn({
           document: documentAST,
           variables,
           operationName,

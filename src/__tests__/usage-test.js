@@ -4,7 +4,7 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import request from 'supertest-as-promised';
-import koa from 'koa';
+import Koa from 'koa';
 import mount from 'koa-mount';
 import graphqlHTTP from '..';
 
@@ -20,7 +20,7 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object', async () => {
-    const app = koa();
+    const app = new Koa();
 
     app.use(mount('/graphql', graphqlHTTP(() => null)));
 
@@ -36,7 +36,7 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object or promise of object', async () => {
-    const app = koa();
+    const app = new Koa();
 
     app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve(null))));
 
@@ -52,7 +52,7 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object with schema', async () => {
-    const app = koa();
+    const app = new Koa();
 
     app.use(mount('/graphql', graphqlHTTP(() => ({}))));
 
@@ -68,7 +68,7 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object or promise of object with schema', async () => {
-    const app = koa();
+    const app = new Koa();
 
     app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve({}))));
 

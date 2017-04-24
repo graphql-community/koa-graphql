@@ -2,6 +2,7 @@
 
 // 80+ char lines are useful in describe/it, so ignore in this file.
 /* eslint-disable max-len */
+/* eslint-disable callback-return */
 
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
@@ -10,7 +11,7 @@ import zlib from 'zlib';
 import multer from 'multer';
 import multerWrapper from './helpers/koa-multer';
 import request from 'supertest-as-promised';
-import koa from 'koa';
+import Koa from 'koa';
 import mount from 'koa-mount';
 import session from 'koa-session';
 import parse from 'co-body';
@@ -111,7 +112,7 @@ describe('test harness', () => {
 describe('GraphQL-HTTP tests', () => {
   describe('GET functionality', () => {
     it('allows GET with query param', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -128,7 +129,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows GET with variable values', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -146,7 +147,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows GET with operation name', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -174,7 +175,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Reports validation errors', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -199,7 +200,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when missing operation name', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -220,7 +221,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when sending a mutation via GET', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -238,7 +239,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Errors when selecting a mutation within a GET', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -260,7 +261,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows a mutation to exist within a GET', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -283,7 +284,7 @@ describe('GraphQL-HTTP tests', () => {
 
 
     it('Allows passing in a context', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -307,12 +308,12 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Uses ctx as context by default', async () => {
-      const app = koa();
+      const app = new Koa();
 
       // Middleware that adds ctx.foo to every request
-      app.use(function *(next) {
-        this.foo = 'bar';
-        yield next;
+      app.use((ctx, next) => {
+        ctx.foo = 'bar';
+        return next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({
@@ -336,7 +337,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows returning an options Promise', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP(() => Promise.resolve({
         schema: TestSchema,
@@ -353,7 +354,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Catches errors thrown from options function', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP(() => {
         throw new Error('I did something wrong');
@@ -373,7 +374,7 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('POST functionality', () => {
     it('allows POST with JSON encoding', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -388,7 +389,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows sending a mutation via POST', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -403,7 +404,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with url encoding', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -419,7 +420,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with string variables', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -438,7 +439,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with JSON variables', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -457,7 +458,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST url encoded query with string variables', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -476,7 +477,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST JSON query with GET variable values', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -494,7 +495,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST url encoded query with GET variable values', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -514,7 +515,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports POST raw text query with GET variable values', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -533,7 +534,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with operation name', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -562,7 +563,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows POST with GET operation name', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -591,7 +592,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows other UTF charsets', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -611,7 +612,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows gzipped POST bodies', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -636,7 +637,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows deflated POST bodies', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -698,7 +699,7 @@ describe('GraphQL-HTTP tests', () => {
         })
       });
 
-      const app = koa();
+      const app = new Koa();
 
       // Multer provides multipart form data parsing.
       const storage = multer.memoryStorage();
@@ -732,12 +733,12 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows for pre-parsed POST using application/graphql', async () => {
-      const app = koa();
-      app.use(function *(next) {
-        if (this.is('application/graphql')) {
-          this.request.body = yield parse.text(this);
+      const app = new Koa();
+      app.use(async function (ctx, next) {
+        if (ctx.is('application/graphql')) {
+          ctx.request.body = await parse.text(ctx);
         }
-        yield next;
+        await next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -756,12 +757,12 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('does not accept unknown pre-parsed POST string', async () => {
-      const app = koa();
-      app.use(function *(next) {
-        if (this.is('*/*')) {
-          this.request.body = yield parse.text(this);
+      const app = new Koa();
+      app.use(async function (ctx, next) {
+        if (ctx.is('*/*')) {
+          ctx.request.body = await parse.text(ctx);
         }
-        yield next;
+        await next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -778,17 +779,17 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
-      const app = koa();
-      app.use(function *(next) {
-        if (this.is('*/*')) {
-          const req = this.req;
-          this.request.body = yield getRawBody(req, {
+      const app = new Koa();
+      app.use(async function (ctx, next) {
+        if (ctx.is('*/*')) {
+          const req = ctx.req;
+          ctx.request.body = await getRawBody(req, {
             length: req.headers['content-length'],
             limit: '1mb',
             encoding: null
           });
         }
-        yield next;
+        await next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -808,7 +809,7 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Pretty printing', () => {
     it('supports pretty printing', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -830,7 +831,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('supports pretty printing configured by request', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP(req => {
         return {
@@ -875,7 +876,7 @@ describe('GraphQL-HTTP tests', () => {
   });
 
   it('will send request, response and context when using thunk', async () => {
-    const app = koa();
+    const app = new Koa();
 
     let hasRequest = false;
     let hasResponse = false;
@@ -903,7 +904,7 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Error handling functionality', () => {
     it('handles field errors caught by GraphQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -926,7 +927,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles query errors from non-null top field errors', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -949,7 +950,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows for custom error formatting to sanitize', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -973,7 +974,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('allows for custom error formatting to elaborate', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1003,7 +1004,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles syntax errors caught by GraphQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1025,7 +1026,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles errors caused by a lack of query', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1041,7 +1042,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles invalid JSON bodies', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1059,7 +1060,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles incomplete JSON bodies', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1077,7 +1078,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles plain POST text', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1097,7 +1098,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles unsupported charset', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1115,7 +1116,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles unsupported utf charset', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1133,7 +1134,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles unknown encoding', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1151,7 +1152,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles poorly formed variables', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1170,7 +1171,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles unsupported HTTP methods', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema
@@ -1192,7 +1193,7 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Built-in GraphiQL support', () => {
     it('does not renders GraphiQL if no opt-in', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
@@ -1208,7 +1209,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('presents GraphiQL when accepting HTML', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1225,7 +1226,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('contains a pre-run response within GraphiQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1246,7 +1247,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('contains a pre-run operation name within GraphiQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1271,7 +1272,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('escapes HTML in queries within GraphiQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1288,7 +1289,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('escapes HTML in variables within GraphiQL', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1308,7 +1309,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('GraphiQL renders provided variables', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1332,7 +1333,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('GraphiQL accepts an empty query', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1349,7 +1350,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('GraphiQL accepts a mutation query - does not execute it', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1371,7 +1372,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('returns HTML if preferred', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1389,7 +1390,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('returns JSON if preferred', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1408,7 +1409,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('prefers JSON if unknown accept', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1427,7 +1428,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('prefers JSON if explicitly requested raw response', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1459,7 +1460,7 @@ describe('GraphQL-HTTP tests', () => {
     };
 
     it('Do not execute a query if it do not pass the custom validation.', async() => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1498,12 +1499,12 @@ describe('GraphQL-HTTP tests', () => {
           }
         })
       });
-      const app = koa();
+      const app = new Koa();
       app.keys = [ 'some secret hurr' ];
       app.use(session(app));
-      app.use(function *(next) {
-        this.session.id = 'me';
-        yield next;
+      app.use(async function (ctx, next) {
+        ctx.session.id = 'me';
+        await next();
       });
 
       app.use(mount('/graphql', graphqlHTTP((req, res, ctx) => ({
@@ -1524,7 +1525,7 @@ describe('GraphQL-HTTP tests', () => {
 
   describe('Custom result extensions', () => {
     it('allows for adding extensions', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP(() => {
         const startTime = 1000000000; /* Date.now(); */
@@ -1548,7 +1549,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('extensions have access to initial GraphQL result', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,
@@ -1578,7 +1579,7 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('extension function may be async', async () => {
-      const app = koa();
+      const app = new Koa();
 
       app.use(mount(urlString(), graphqlHTTP({
         schema: TestSchema,

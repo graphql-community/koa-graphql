@@ -1,5 +1,5 @@
 [ignore]
-.*/dist/.*
+./dist/.*
 .*/node_modules/flow-bin/.*
 .*/node_modules/y18n/.*
 

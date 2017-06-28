@@ -10,7 +10,7 @@ import { stringify } from 'querystring';
 import zlib from 'zlib';
 import multer from 'multer';
 import multerWrapper from './helpers/koa-multer';
-import request from 'supertest-as-promised';
+import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
 import session from 'koa-session';

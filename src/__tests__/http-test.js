@@ -23,7 +23,7 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLError,
-  BREAK
+  BREAK,
 } from 'graphql';
 import graphqlHTTP from '../';
 
@@ -34,22 +34,26 @@ const QueryRootType = new GraphQLObjectType({
       type: GraphQLString,
       args: {
         who: {
-          type: GraphQLString
-        }
+          type: GraphQLString,
+        },
       },
-      resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World')
+      resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World'),
     },
     nonNullThrower: {
       type: new GraphQLNonNull(GraphQLString),
-      resolve: () => { throw new Error('Throws!'); }
+      resolve: () => {
+        throw new Error('Throws!');
+      },
     },
     thrower: {
       type: GraphQLString,
-      resolve: () => { throw new Error('Throws!'); }
+      resolve: () => {
+        throw new Error('Throws!');
+      },
     },
     context: {
       type: GraphQLString,
-      resolve: (obj, args, context) => context
+      resolve: (obj, args, context) => context,
     },
     contextDotFoo: {
       type: GraphQLString,
@@ -57,7 +61,7 @@ const QueryRootType = new GraphQLObjectType({
         return (context: any).foo;
       },
     },
-  }
+  },
 });
 
 const TestSchema = new GraphQLSchema({
@@ -67,28 +71,27 @@ const TestSchema = new GraphQLSchema({
     fields: {
       writeTest: {
         type: QueryRootType,
-        resolve: () => ({})
-      }
-    }
-  })
+        resolve: () => ({}),
+      },
+    },
+  }),
 });
 
-function urlString(urlParams?: ?{[param: string]: mixed}) {
+function urlString(urlParams?: ?{ [param: string]: mixed }) {
   let string = '/graphql';
   if (urlParams) {
-    string += ('?' + stringify(urlParams));
+    string += '?' + stringify(urlParams);
   }
   return string;
 }
 
 function promiseTo(fn) {
   return new Promise((resolve, reject) => {
-    fn((error, result) => error ? reject(error) : resolve(result));
+    fn((error, result) => (error ? reject(error) : resolve(result)));
   });
 }
 
 describe('test harness', () => {
-
   it('resolves callback promises', async () => {
     const resolveValue = {};
     const result = await promiseTo(cb => cb(null, resolveValue));
@@ -105,7 +108,6 @@ describe('test harness', () => {
     }
     expect(caught).to.equal(rejectError);
   });
-
 });
 
 function server() {
@@ -117,53 +119,65 @@ function server() {
   return app;
 }
 
-
 describe('GraphQL-HTTP tests', () => {
   describe('GET functionality', () => {
     it('allows GET with query param', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
-
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{test}'
-        }));
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
       );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('allows GET with variable values', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
-
-      const response = await request(app.listen())
-        .get(urlString({
-          query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: JSON.stringify({ who: 'Dolly' })
-        }));
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
       );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: 'query helloWho($who: String){ test(who: $who) }',
+          variables: JSON.stringify({ who: 'Dolly' }),
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('allows GET with operation name', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
@@ -172,14 +186,15 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-          operationName: 'helloWorld'
-        }));
+          operationName: 'helloWorld',
+        }),
+      );
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           test: 'Hello World',
           shared: 'Hello Everyone',
-        }
+        },
       });
     });
 
@@ -188,23 +203,24 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{ test, unknownOne, unknownTwo }'
-        }));
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{ test, unknownOne, unknownTwo }',
+        }),
+      );
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
             message: 'Cannot query field "unknownOne" on type "QueryRoot".',
-            locations: [ { line: 1, column: 9 } ]
+            locations: [{ line: 1, column: 9 }],
           },
           {
             message: 'Cannot query field "unknownTwo" on type "QueryRoot".',
-            locations: [ { line: 1, column: 21 } ]
-          }
-        ]
+            locations: [{ line: 1, column: 21 }],
+          },
+        ],
       });
     });
 
@@ -213,19 +229,23 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: `
             query TestQuery { test }
             mutation TestMutation { writeTest { test } }
-          `
-        }));
+          `,
+        }),
+      );
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
-          { message: 'Must provide operation name if query contains multiple operations.' }
-        ]
+          {
+            message:
+              'Must provide operation name if query contains multiple operations.',
+          },
+        ],
       });
     });
 
@@ -234,16 +254,20 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const response = await request(app.listen())
-        .get(urlString({
-          query: 'mutation TestMutation { writeTest { test } }'
-        }));
+      const response = await request(app.listen()).get(
+        urlString({
+          query: 'mutation TestMutation { writeTest { test } }',
+        }),
+      );
 
       expect(response.status).to.equal(405);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
-          { message: 'Can only perform a mutation operation from a POST request.' }
-        ]
+          {
+            message:
+              'Can only perform a mutation operation from a POST request.',
+          },
+        ],
       });
     });
 
@@ -252,20 +276,24 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           operationName: 'TestMutation',
           query: `
             query TestQuery { test }
             mutation TestMutation { writeTest { test } }
-          `
-        }));
+          `,
+        }),
+      );
 
       expect(response.status).to.equal(405);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
-          { message: 'Can only perform a mutation operation from a POST request.' }
-        ]
+          {
+            message:
+              'Can only perform a mutation operation from a POST request.',
+          },
+        ],
       });
     });
 
@@ -274,45 +302,51 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           operationName: 'TestQuery',
           query: `
             mutation TestMutation { writeTest { test } }
             query TestQuery { test }
-          `
-        }));
+          `,
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          test: 'Hello World'
-        }
+          test: 'Hello World',
+        },
       });
     });
-
 
     it('Allows passing in a context', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        context: 'testValue'
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            context: 'testValue',
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           operationName: 'TestQuery',
           query: `
             query TestQuery { context }
-          `
-        }));
+          `,
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          context: 'testValue'
-        }
+          context: 'testValue',
+        },
       });
     });
 
@@ -325,58 +359,76 @@ describe('GraphQL-HTTP tests', () => {
         return next();
       });
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           operationName: 'TestQuery',
           query: `
             query TestQuery { contextDotFoo }
-          `
-        }));
+          `,
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          contextDotFoo: 'bar'
-        }
+          contextDotFoo: 'bar',
+        },
       });
     });
 
     it('Allows returning an options Promise', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP(() => Promise.resolve({
-        schema: TestSchema,
-      }))));
-
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{test}'
-        }));
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() =>
+            Promise.resolve({
+              schema: TestSchema,
+            }),
+          ),
+        ),
       );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('Catches errors thrown from options function', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP(() => {
-        throw new Error('I did something wrong');
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => {
+            throw new Error('I did something wrong');
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{test}'
-        }));
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+        }),
+      );
 
       expect(response.status).to.equal(500);
       expect(response.text).to.equal(
-        '{"errors":[{"message":"I did something wrong"}]}'
+        '{"errors":[{"message":"I did something wrong"}]}',
       );
     });
   });
@@ -385,16 +437,20 @@ describe('GraphQL-HTTP tests', () => {
     it('allows POST with JSON encoding', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString()).send({ query: '{test}' });
+        .post(urlString())
+        .send({ query: '{test}' });
 
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('Allows sending a mutation via POST', async () => {
@@ -408,151 +464,179 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(response.text).to.equal(
-        '{"data":{"writeTest":{"test":"Hello World"}}}'
+        '{"data":{"writeTest":{"test":"Hello World"}}}',
       );
     });
 
     it('allows POST with url encoding', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
         .send(stringify({ query: '{test}' }));
 
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('supports POST JSON query with string variables', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
-
-      const response = await request(app.listen())
-        .post(urlString())
-        .send({
-          query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: JSON.stringify({ who: 'Dolly' })
-        });
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
       );
+
+      const response = await request(app.listen()).post(urlString()).send({
+        query: 'query helloWho($who: String){ test(who: $who) }',
+        variables: JSON.stringify({ who: 'Dolly' }),
+      });
+
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('supports POST JSON query with JSON variables', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
-
-      const response = await request(app.listen())
-        .post(urlString())
-        .send({
-          query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: { who: 'Dolly' }
-        });
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
       );
+
+      const response = await request(app.listen()).post(urlString()).send({
+        query: 'query helloWho($who: String){ test(who: $who) }',
+        variables: { who: 'Dolly' },
+      });
+
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('supports POST url encoded query with string variables', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
-
-      const response = await request(app.listen())
-        .post(urlString())
-        .send(stringify({
-          query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: JSON.stringify({ who: 'Dolly' })
-        }));
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
       );
+
+      const response = await request(app.listen()).post(urlString()).send(
+        stringify({
+          query: 'query helloWho($who: String){ test(who: $who) }',
+          variables: JSON.stringify({ who: 'Dolly' }),
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('supports POST JSON query with GET variable values', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString({
-          variables: JSON.stringify({ who: 'Dolly' })
-        }))
+        .post(
+          urlString({
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        )
         .send({ query: 'query helloWho($who: String){ test(who: $who) }' });
 
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('supports POST url encoded query with GET variable values', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString({
-          variables: JSON.stringify({ who: 'Dolly' })
-        }))
-        .send(stringify({
-          query: 'query helloWho($who: String){ test(who: $who) }'
-        }));
+        .post(
+          urlString({
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        )
+        .send(
+          stringify({
+            query: 'query helloWho($who: String){ test(who: $who) }',
+          }),
+        );
 
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('supports POST raw text query with GET variable values', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString({
-          variables: JSON.stringify({ who: 'Dolly' })
-        }))
+        .post(
+          urlString({
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        )
         .set('Content-Type', 'application/graphql')
         .send('query helloWho($who: String){ test(who: $who) }');
 
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello Dolly"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
 
     it('allows POST with operation name', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .post(urlString())
-        .send({
-          query: `
+      const response = await request(app.listen()).post(urlString()).send({
+        query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
             query helloDolly { test(who: "Dolly"), ...shared }
@@ -560,30 +644,36 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-          operationName: 'helloWorld'
-        });
+        operationName: 'helloWorld',
+      });
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           test: 'Hello World',
           shared: 'Hello Everyone',
-        }
+        },
       });
     });
 
     it('allows POST with GET operation name', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString({
-          operationName: 'helloWorld'
-        }))
-        .set('Content-Type', 'application/graphql')
-        .send(`
+        .post(
+          urlString({
+            operationName: 'helloWorld',
+          }),
+        )
+        .set('Content-Type', 'application/graphql').send(`
           query helloYou { test(who: "You"), ...shared }
           query helloWorld { test(who: "World"), ...shared }
           query helloDolly { test(who: "Dolly"), ...shared }
@@ -596,16 +686,21 @@ describe('GraphQL-HTTP tests', () => {
         data: {
           test: 'Hello World',
           shared: 'Hello Everyone',
-        }
+        },
       });
     });
 
     it('allows other UTF charsets', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const req = request(app.listen())
         .post(urlString())
@@ -615,17 +710,22 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          test: 'Hello World'
-        }
+          test: 'Hello World',
+        },
       });
     });
 
     it('allows gzipped POST bodies', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const data = { query: '{ test(who: "World") }' };
       const json = JSON.stringify(data);
@@ -640,17 +740,22 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          test: 'Hello World'
-        }
+          test: 'Hello World',
+        },
       });
     });
 
     it('allows deflated POST bodies', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const data = { query: '{ test(who: "World") }' };
       const json = JSON.stringify(data);
@@ -665,8 +770,8 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          test: 'Hello World'
-        }
+          test: 'Hello World',
+        },
       });
     });
 
@@ -681,16 +786,16 @@ describe('GraphQL-HTTP tests', () => {
         name: 'UploadedFile',
         fields: {
           originalname: { type: GraphQLString },
-          mimetype: { type: GraphQLString }
-        }
+          mimetype: { type: GraphQLString },
+        },
       });
 
       const TestMutationSchema = new GraphQLSchema({
         query: new GraphQLObjectType({
           name: 'QueryRoot',
           fields: {
-            test: { type: GraphQLString }
-          }
+            test: { type: GraphQLString },
+          },
         }),
         mutation: new GraphQLObjectType({
           name: 'MutationRoot',
@@ -702,10 +807,10 @@ describe('GraphQL-HTTP tests', () => {
                 // file directly, but presumably you might return a Promise
                 // to go store the file somewhere first.
                 return rootValue.request.file;
-              }
-            }
-          }
-        })
+              },
+            },
+          },
+        }),
       });
 
       const app = server();
@@ -716,34 +821,42 @@ describe('GraphQL-HTTP tests', () => {
 
       // Providing the request as part of `rootValue` allows it to
       // be accessible from within Schema resolve functions.
-      app.use(mount(urlString(), graphqlHTTP((req, ctx) => {
-        expect(ctx.req.file.originalname).to.equal('http-test.js');
-        return {
-          schema: TestMutationSchema,
-          rootValue: { request: ctx.req }
-        };
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP((req, ctx) => {
+            expect(ctx.req.file.originalname).to.equal('http-test.js');
+            return {
+              schema: TestMutationSchema,
+              rootValue: { request: ctx.req },
+            };
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
-        .field('query', `mutation TestMutation {
+        .field(
+          'query',
+          `mutation TestMutation {
           uploadFile { originalname, mimetype }
-        }`)
+        }`,
+        )
         .attach('file', __filename);
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           uploadFile: {
             originalname: 'http-test.js',
-            mimetype: 'application/javascript'
-          }
-        }
+            mimetype: 'application/javascript',
+          },
+        },
       });
     });
 
     it('allows for pre-parsed POST using application/graphql', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async function(ctx, next) {
         if (ctx.is('application/graphql')) {
           ctx.request.body = await parse.text(ctx);
         }
@@ -760,14 +873,14 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          test: 'Hello World'
-        }
+          test: 'Hello World',
+        },
       });
     });
 
     it('does not accept unknown pre-parsed POST string', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async function(ctx, next) {
         if (ctx.is('*/*')) {
           ctx.request.body = await parse.text(ctx);
         }
@@ -776,26 +889,25 @@ describe('GraphQL-HTTP tests', () => {
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
-      const req = request(app.listen())
-        .post(urlString());
+      const req = request(app.listen()).post(urlString());
       req.write(new Buffer('{ test(who: "World") }'));
       const response = await req;
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Must provide query string.' } ]
+        errors: [{ message: 'Must provide query string.' }],
       });
     });
 
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async function(ctx, next) {
         if (ctx.is('*/*')) {
           const req = ctx.req;
           ctx.request.body = await getRawBody(req, {
             length: req.headers['content-length'],
             limit: '1mb',
-            encoding: null
+            encoding: null,
           });
         }
         await next();
@@ -811,7 +923,7 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Must provide query string.' } ]
+        errors: [{ message: 'Must provide query string.' }],
       });
     });
   });
@@ -820,67 +932,69 @@ describe('GraphQL-HTTP tests', () => {
     it('supports pretty printing', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        pretty: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            pretty: true,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{test}'
-        }));
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+        }),
+      );
 
       expect(response.text).to.equal(
-        '{\n' +
-        '  "data": {\n' +
-        '    "test": "Hello World"\n' +
-        '  }\n' +
-        '}'
+        '{\n' + '  "data": {\n' + '    "test": "Hello World"\n' + '  }\n' + '}',
       );
     });
 
     it('supports pretty printing configured by request', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP(req => {
-        return {
-          schema: TestSchema,
-          pretty: req.query.pretty === '1'
-        };
-      })));
-
-      const defaultResponse = await request(app.listen())
-        .get(urlString({
-          query: '{test}'
-        }));
-
-      expect(defaultResponse.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(req => {
+            return {
+              schema: TestSchema,
+              pretty: req.query.pretty === '1',
+            };
+          }),
+        ),
       );
 
-      const prettyResponse = await request(app.listen())
-        .get(urlString({
+      const defaultResponse = await request(app.listen()).get(
+        urlString({
           query: '{test}',
-          pretty: 1
-        }));
+        }),
+      );
+
+      expect(defaultResponse.text).to.equal('{"data":{"test":"Hello World"}}');
+
+      const prettyResponse = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+          pretty: 1,
+        }),
+      );
 
       expect(prettyResponse.text).to.equal(
-        '{\n' +
-        '  "data": {\n' +
-        '    "test": "Hello World"\n' +
-        '  }\n' +
-        '}'
+        '{\n' + '  "data": {\n' + '    "test": "Hello World"\n' + '  }\n' + '}',
       );
 
-      const unprettyResponse = await request(app.listen())
-        .get(urlString({
+      const unprettyResponse = await request(app.listen()).get(
+        urlString({
           query: '{test}',
-          pretty: 0
-        }));
-
-      expect(unprettyResponse.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
+          pretty: 0,
+        }),
       );
+
+      expect(unprettyResponse.text).to.equal('{"data":{"test":"Hello World"}}');
     });
   });
 
@@ -891,18 +1005,23 @@ describe('GraphQL-HTTP tests', () => {
     let hasResponse = false;
     let hasContext = false;
 
-    app.use(mount(urlString(), graphqlHTTP((reqest, response, context) => {
-      if (request) {
-        hasRequest = true;
-      }
-      if (response) {
-        hasResponse = true;
-      }
-      if (context) {
-        hasContext = true;
-      }
-      return { schema: TestSchema };
-    })));
+    app.use(
+      mount(
+        urlString(),
+        graphqlHTTP((reqest, response, context) => {
+          if (request) {
+            hasRequest = true;
+          }
+          if (response) {
+            hasResponse = true;
+          }
+          if (context) {
+            hasContext = true;
+          }
+          return { schema: TestSchema };
+        }),
+      ),
+    );
 
     await request(app.listen()).get(urlString({ query: '{test}' }));
 
@@ -915,147 +1034,197 @@ describe('GraphQL-HTTP tests', () => {
     it('handles field errors caught by GraphQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{thrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: { thrower: null },
-        errors: [ {
-          message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ],
-          path: [ 'thrower' ]
-        } ]
+        errors: [
+          {
+            message: 'Throws!',
+            locations: [{ line: 1, column: 2 }],
+            path: ['thrower'],
+          },
+        ],
       });
     });
 
     it('handles query errors from non-null top field errors', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{nonNullThrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(500);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: null,
-        errors: [ {
-          message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ],
-          path: [ 'nonNullThrower' ]
-        } ]
+        errors: [
+          {
+            message: 'Throws!',
+            locations: [{ line: 1, column: 2 }],
+            path: ['nonNullThrower'],
+          },
+        ],
       });
     });
 
     it('allows for custom error formatting to sanitize', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        formatError(error) {
-          return { message: 'Custom error format: ' + error.message };
-        }
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            formatError(error) {
+              return { message: 'Custom error format: ' + error.message };
+            },
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{thrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: { thrower: null },
-        errors: [ {
-          message: 'Custom error format: Throws!',
-        } ]
+        errors: [
+          {
+            message: 'Custom error format: Throws!',
+          },
+        ],
       });
     });
 
     it('allows for custom error formatting to elaborate', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        formatError(error) {
-          return {
-            message: error.message,
-            locations: error.locations,
-            stack: 'Stack trace'
-          };
-        }
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            formatError(error) {
+              return {
+                message: error.message,
+                locations: error.locations,
+                stack: 'Stack trace',
+              };
+            },
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{thrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: { thrower: null },
-        errors: [ {
-          message: 'Throws!',
-          locations: [ { line: 1, column: 2 } ],
-          stack: 'Stack trace',
-        } ]
+        errors: [
+          {
+            message: 'Throws!',
+            locations: [{ line: 1, column: 2 }],
+            stack: 'Stack trace',
+          },
+        ],
       });
     });
 
     it('handles syntax errors caught by GraphQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: 'syntaxerror',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ {
-          message: 'Syntax Error GraphQL request (1:1) ' +
-            'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n',
-          locations: [ { line: 1, column: 1 } ]
-        } ]
+        errors: [
+          {
+            message:
+              'Syntax Error GraphQL request (1:1) ' +
+              'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n',
+            locations: [{ line: 1, column: 1 }],
+          },
+        ],
       });
     });
 
     it('handles errors caused by a lack of query', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString());
+      const response = await request(app.listen()).get(urlString());
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Must provide query string.' } ]
+        errors: [{ message: 'Must provide query string.' }],
       });
     });
 
     it('handles invalid JSON bodies', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
@@ -1064,16 +1233,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'POST body sent invalid JSON.' } ]
+        errors: [{ message: 'POST body sent invalid JSON.' }],
       });
     });
 
     it('handles incomplete JSON bodies', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
@@ -1082,36 +1256,48 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'POST body sent invalid JSON.' } ]
+        errors: [{ message: 'POST body sent invalid JSON.' }],
       });
     });
 
     it('handles plain POST text', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .post(urlString({
-          variables: JSON.stringify({ who: 'Dolly' })
-        }))
+        .post(
+          urlString({
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        )
         .set('Content-Type', 'text/plain')
         .send('query helloWho($who: String){ test(who: $who) }');
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Must provide query string.' } ]
+        errors: [{ message: 'Must provide query string.' }],
       });
     });
 
     it('handles unsupported charset', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
@@ -1120,16 +1306,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(415);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Unsupported charset "ASCII".' } ]
+        errors: [{ message: 'Unsupported charset "ASCII".' }],
       });
     });
 
     it('handles unsupported utf charset', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
@@ -1138,16 +1329,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(415);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Unsupported charset "UTF-53".' } ]
+        errors: [{ message: 'Unsupported charset "UTF-53".' }],
       });
     });
 
     it('handles unknown encoding', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .post(urlString())
@@ -1156,48 +1352,57 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(415);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Unsupported content-encoding "garbage".' } ]
+        errors: [{ message: 'Unsupported content-encoding "garbage".' }],
       });
     });
 
     it('handles poorly formed variables', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           variables: 'who:You',
-          query: 'query helloWho($who: String){ test(who: $who) }'
-        }));
+          query: 'query helloWho($who: String){ test(who: $who) }',
+        }),
+      );
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [ { message: 'Variables are invalid JSON.' } ]
+        errors: [{ message: 'Variables are invalid JSON.' }],
       });
     });
 
     it('handles unsupported HTTP methods', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .put(urlString({ query: '{test}' }));
+      const response = await request(app.listen()).put(
+        urlString({ query: '{test}' }),
+      );
 
       expect(response.status).to.equal(405);
       expect(response.headers.allow).to.equal('GET, POST');
       expect(JSON.parse(response.text)).to.deep.equal({
-        errors: [
-          { message: 'GraphQL only supports GET and POST requests.' }
-        ]
+        errors: [{ message: 'GraphQL only supports GET and POST requests.' }],
       });
     });
-
   });
 
   describe('Built-in GraphiQL support', () => {
@@ -1212,18 +1417,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('presents GraphiQL when accepting HTML', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
@@ -1237,10 +1445,15 @@ describe('GraphQL-HTTP tests', () => {
     it('contains a pre-run response within GraphiQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
@@ -1249,33 +1462,42 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
       expect(response.text).to.include(
-        'response: ' + JSON.stringify(
-          JSON.stringify({ data: { test: 'Hello World' } }, null, 2)
-        )
+        'response: ' +
+          JSON.stringify(
+            JSON.stringify({ data: { test: 'Hello World' } }, null, 2),
+          ),
       );
     });
 
     it('contains a pre-run operation name within GraphiQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .get(urlString({
-          query: 'query A{a:test} query B{b:test}',
-          operationName: 'B'
-        }))
+        .get(
+          urlString({
+            query: 'query A{a:test} query B{b:test}',
+            operationName: 'B',
+          }),
+        )
         .set('Accept', 'text/html');
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
       expect(response.text).to.include(
-        'response: ' + JSON.stringify(
-          JSON.stringify({ data: { b: 'Hello World' } }, null, 2)
-        )
+        'response: ' +
+          JSON.stringify(
+            JSON.stringify({ data: { b: 'Hello World' } }, null, 2),
+          ),
       );
       expect(response.text).to.include('operationName: "B"');
     });
@@ -1283,10 +1505,15 @@ describe('GraphQL-HTTP tests', () => {
     it('escapes HTML in queries within GraphiQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '</script><script>alert(1)</script>' }))
@@ -1294,60 +1521,84 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(400);
       expect(response.type).to.equal('text/html');
-      expect(response.text).to.not.include('</script><script>alert(1)</script>');
+      expect(response.text).to.not.include(
+        '</script><script>alert(1)</script>',
+      );
     });
 
     it('escapes HTML in variables within GraphiQL', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen()).get(urlString({
-        query: 'query helloWho($who: String) { test(who: $who) }',
-        variables: JSON.stringify({
-          who: '</script><script>alert(1)</script>'
-        })
-      })) .set('Accept', 'text/html');
+      const response = await request(app.listen())
+        .get(
+          urlString({
+            query: 'query helloWho($who: String) { test(who: $who) }',
+            variables: JSON.stringify({
+              who: '</script><script>alert(1)</script>',
+            }),
+          }),
+        )
+        .set('Accept', 'text/html');
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
-      expect(response.text).to.not.include('</script><script>alert(1)</script>');
+      expect(response.text).to.not.include(
+        '</script><script>alert(1)</script>',
+      );
     });
 
     it('GraphiQL renders provided variables', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .get(urlString({
-          query: 'query helloWho($who: String) { test(who: $who) }',
-          variables: JSON.stringify({ who: 'Dolly' })
-        }))
+        .get(
+          urlString({
+            query: 'query helloWho($who: String) { test(who: $who) }',
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        )
         .set('Accept', 'text/html');
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
       expect(response.text).to.include(
-        'variables: ' + JSON.stringify(
-          JSON.stringify({ who: 'Dolly' }, null, 2)
-        )
+        'variables: ' +
+          JSON.stringify(JSON.stringify({ who: 'Dolly' }, null, 2)),
       );
     });
 
     it('GraphiQL accepts an empty query', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString())
@@ -1361,21 +1612,28 @@ describe('GraphQL-HTTP tests', () => {
     it('GraphiQL accepts a mutation query - does not execute it', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
-        .get(urlString({
-          query: 'mutation TestMutation { writeTest { test } }'
-        }))
+        .get(
+          urlString({
+            query: 'mutation TestMutation { writeTest { test } }',
+          }),
+        )
         .set('Accept', 'text/html');
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('text/html');
       expect(response.text).to.include(
-        'query: "mutation TestMutation { writeTest { test } }"'
+        'query: "mutation TestMutation { writeTest { test } }"',
       );
       expect(response.text).to.include('response: undefined');
     });
@@ -1383,10 +1641,15 @@ describe('GraphQL-HTTP tests', () => {
     it('returns HTML if preferred', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
@@ -1401,10 +1664,15 @@ describe('GraphQL-HTTP tests', () => {
     it('returns JSON if preferred', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
@@ -1412,18 +1680,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('prefers JSON if unknown accept', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}' }))
@@ -1431,18 +1702,21 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
     it('prefers JSON if explicitly requested raw response', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        graphiql: true
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            graphiql: true,
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}', raw: '' }))
@@ -1450,45 +1724,49 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"}}'
-      );
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
   });
 
   describe('Custom validation rules', () => {
-    const AlwaysInvalidRule = function (context) {
+    const AlwaysInvalidRule = function(context) {
       return {
         enter() {
-          context.reportError(new GraphQLError(
-            'AlwaysInvalidRule was really invalid!'
-          ));
+          context.reportError(
+            new GraphQLError('AlwaysInvalidRule was really invalid!'),
+          );
           return BREAK;
-        }
+        },
       };
     };
 
-    it('Do not execute a query if it do not pass the custom validation.', async() => {
+    it('Do not execute a query if it do not pass the custom validation.', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        validationRules: [ AlwaysInvalidRule ],
-        pretty: true,
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            validationRules: [AlwaysInvalidRule],
+            pretty: true,
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{thrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(400);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
-            message: 'AlwaysInvalidRule was really invalid!'
+            message: 'AlwaysInvalidRule was really invalid!',
           },
-        ]
+        ],
       });
     });
   });
@@ -1503,32 +1781,36 @@ describe('GraphQL-HTTP tests', () => {
               type: GraphQLString,
               resolve(parentValue, _, sess) {
                 return (sess: any).id;
-              }
-            }
-          }
-        })
+              },
+            },
+          },
+        }),
       });
       const app = server();
-      app.keys = [ 'some secret hurr' ];
+      app.keys = ['some secret hurr'];
       app.use(session(app));
-      app.use(async function (ctx, next) {
+      app.use(async function(ctx, next) {
         ctx.session.id = 'me';
         await next();
       });
 
-      app.use(mount('/graphql', graphqlHTTP((req, res, ctx) => ({
-        schema: SessionAwareGraphQLSchema,
-        context: (ctx: any).session
-      }))));
-
-      const response = await request(app.listen())
-        .get(urlString({
-          query: '{myField}'
-        }));
-
-      expect(response.text).to.equal(
-        '{"data":{"myField":"me"}}'
+      app.use(
+        mount(
+          '/graphql',
+          graphqlHTTP((req, res, ctx) => ({
+            schema: SessionAwareGraphQLSchema,
+            context: (ctx: any).session,
+          })),
+        ),
       );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{myField}',
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"myField":"me"}}');
     });
   });
 
@@ -1536,15 +1818,20 @@ describe('GraphQL-HTTP tests', () => {
     it('allows for adding extensions', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP(() => {
-        const startTime = 1000000000; /* Date.now(); */
-        return {
-          schema: TestSchema,
-          extensions() {
-            return { runTime: 1000000010 /* Date.now() */ - startTime };
-          }
-        };
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => {
+            const startTime = 1000000000; /* Date.now(); */
+            return {
+              schema: TestSchema,
+              extensions() {
+                return { runTime: 1000000010 /* Date.now() */ - startTime };
+              },
+            };
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}', raw: '' }))
@@ -1553,50 +1840,63 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"},"extensions":{"runTime":10}}'
+        '{"data":{"test":"Hello World"},"extensions":{"runTime":10}}',
       );
     });
 
     it('extensions have access to initial GraphQL result', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        formatError: () => null,
-        extensions({ result }) {
-          return { preservedErrors: (result: any).errors };
-        }
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            formatError: () => null,
+            extensions({ result }) {
+              return { preservedErrors: (result: any).errors };
+            },
+          }),
+        ),
+      );
 
-      const response = await request(app.listen())
-        .get(urlString({
+      const response = await request(app.listen()).get(
+        urlString({
           query: '{thrower}',
-        }));
+        }),
+      );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: { thrower: null },
-        errors: [ null ],
+        errors: [null],
         extensions: {
-          preservedErrors: [ {
-            message: 'Throws!',
-            locations: [ { line: 1, column: 2 } ],
-            path: [ 'thrower' ]
-          } ]
-        }
+          preservedErrors: [
+            {
+              message: 'Throws!',
+              locations: [{ line: 1, column: 2 }],
+              path: ['thrower'],
+            },
+          ],
+        },
       });
     });
 
     it('extension function may be async', async () => {
       const app = server();
 
-      app.use(mount(urlString(), graphqlHTTP({
-        schema: TestSchema,
-        async extensions() {
-          // Note: you can await arbitrary things here!
-          return { eventually: 42 };
-        }
-      })));
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            async extensions() {
+              // Note: you can await arbitrary things here!
+              return { eventually: 42 };
+            },
+          }),
+        ),
+      );
 
       const response = await request(app.listen())
         .get(urlString({ query: '{test}', raw: '' }))
@@ -1605,7 +1905,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}'
+        '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}',
       );
     });
   });

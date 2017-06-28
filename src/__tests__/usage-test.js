@@ -8,15 +8,11 @@ import Koa from 'koa';
 import mount from 'koa-mount';
 import graphqlHTTP from '..';
 
-
 describe('Useful errors when incorrectly used', () => {
-
   it('requires an option factory function', () => {
     expect(() => {
       graphqlHTTP();
-    }).to.throw(
-      'GraphQL middleware requires options.'
-    );
+    }).to.throw('GraphQL middleware requires options.');
   });
 
   it('requires option factory function to return object', async () => {
@@ -29,9 +25,11 @@ describe('Useful errors when incorrectly used', () => {
     expect(response.status).to.equal(500);
     expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
-        { message:
-          'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.' }
-      ]
+        {
+          message:
+            'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.',
+        },
+      ],
     });
   });
 
@@ -45,9 +43,11 @@ describe('Useful errors when incorrectly used', () => {
     expect(response.status).to.equal(500);
     expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
-        { message:
-          'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.' }
-      ]
+        {
+          message:
+            'GraphQL middleware option function must return an options object or a promise which will be resolved to an options object.',
+        },
+      ],
     });
   });
 
@@ -56,14 +56,13 @@ describe('Useful errors when incorrectly used', () => {
 
     app.use(mount('/graphql', graphqlHTTP(() => ({}))));
 
-
     const response = await request(app.listen()).get('/graphql?query={test}');
 
     expect(response.status).to.equal(500);
     expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
-        { message: 'GraphQL middleware options must contain a schema.' }
-      ]
+        { message: 'GraphQL middleware options must contain a schema.' },
+      ],
     });
   });
 
@@ -77,9 +76,8 @@ describe('Useful errors when incorrectly used', () => {
     expect(response.status).to.equal(500);
     expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
-        { message: 'GraphQL middleware options must contain a schema.' }
-      ]
+        { message: 'GraphQL middleware options must contain a schema.' },
+      ],
     });
   });
-
 });

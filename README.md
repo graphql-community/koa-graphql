@@ -77,10 +77,12 @@ The `graphqlHTTP` function accepts the following options:
   * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
     A `schema` *must* be provided.
 
-  * **`graphiql`**: If `true`, presents [GraphiQL][] when the route with a
+  * **`graphiql`**: If `true` or `object`, presents [GraphiQL][] when the route with a
     `/graphiql` appended is loaded in a browser. We recommend that you set
     `graphiql` to `true` when your app is in development, because it's
-    quite useful. You may or may not want it in production.
+    quite useful. By passing an object you may change the theme of GraphiQL.
+    Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
+    You may or may not want to turn on GraphiQL in production.
 
   * **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
     function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/master/src/execution/execute.js#L122).
@@ -247,6 +249,36 @@ for example:
   }
 }
 ```
+
+## Custom GraphiQL themes
+
+To use custom GraphiQL theme you should pass to `graphiql` option an object with
+the property `editorTheme`. It could be a string with the name of a theme from `CodeMirror`
+```js
+router.all('/graphql', graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: {
+    editorTheme: 'blackboard'
+  }
+}));
+```
+[List of available CodeMirror themas](https://codemirror.net/demo/theme.html)
+
+or an object with `url` and `name` properties where `url` should lead to
+your custom theme and `name` would be passed to the `GraphiQL`
+react element on creation as the `editorTheme` property
+```js
+router.all('/graphql', graphqlHTTP({
+  schema: MyGraphQLSchema,
+  graphiql: {
+    editorTheme: {
+      name: 'blackboard',
+      url: 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.53.2/theme/erlang-dark.css'
+    }
+  }
+}));
+```
+For details see the [GraphiQL spec](https://github.com/graphql/graphiql/tree/master/packages/graphiql#applying-an-editor-theme)
 
 
 ## Additional Validation Rules

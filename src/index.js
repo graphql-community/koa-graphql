@@ -15,7 +15,7 @@ import httpError from 'http-errors';
 import { renderGraphiQL } from './renderGraphiQL';
 
 import type { GraphQLError, GraphQLSchema } from 'graphql';
-import type { Context, Request } from 'koa';
+import type { Context, Request, Response } from 'koa';
 import type { RequestInfo, GraphQLParams } from 'express-graphql';
 
 /**
@@ -26,7 +26,7 @@ import type { RequestInfo, GraphQLParams } from 'express-graphql';
  * that returns an Object or a Promise for an Object.
  */
 export type Options =
-  | ((request: Request, ctx: Context) => OptionsResult)
+  | ((request: Request, response: Response, ctx: Context) => OptionsResult)
   | OptionsResult;
 export type OptionsResult = OptionsData | Promise<OptionsData>;
 export type OptionsData = {

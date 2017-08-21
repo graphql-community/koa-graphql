@@ -204,7 +204,7 @@ function graphqlHTTP(options: Options): Middleware {
         // a result, otherwise return a 400: Bad Request.
         if (!query) {
           if (showGraphiQL) {
-            resolve(null);
+            return resolve(null);
           }
           throw httpError(400, 'Must provide query string.');
         }
@@ -218,7 +218,7 @@ function graphqlHTTP(options: Options): Middleware {
         } catch (syntaxError) {
           // Return 400: Bad Request if any syntax errors errors exist.
           response.status = 400;
-          resolve({ errors: [syntaxError] });
+          return resolve({ errors: [syntaxError] });
         }
 
         // Validate AST, reporting any errors.
@@ -226,7 +226,7 @@ function graphqlHTTP(options: Options): Middleware {
         if (validationErrors.length > 0) {
           // Return 400: Bad Request if any validation errors exist.
           response.status = 400;
-          resolve({ errors: validationErrors });
+          return resolve({ errors: validationErrors });
         }
 
         // Only query operations are allowed on GET requests.
@@ -238,7 +238,7 @@ function graphqlHTTP(options: Options): Middleware {
             // provide it to GraphiQL so that the requester may perform it
             // themselves if desired.
             if (showGraphiQL) {
-              resolve(null);
+              return resolve(null);
             }
 
             // Otherwise, report a 405: Method Not Allowed error.

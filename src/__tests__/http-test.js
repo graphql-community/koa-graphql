@@ -238,7 +238,7 @@ describe('GraphQL-HTTP tests', () => {
         }),
       );
 
-      expect(response.status).to.equal(400);
+      expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {

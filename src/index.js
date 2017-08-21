@@ -9,7 +9,7 @@ import {
   getOperationAST,
   specifiedRules,
 } from 'graphql';
-import { getGraphQLParams } from 'express-graphql';
+import expressGraphQL from 'express-graphql';
 import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
@@ -17,6 +17,8 @@ import { renderGraphiQL } from './renderGraphiQL';
 import type { GraphQLError, GraphQLSchema } from 'graphql';
 import type { Context, Request, Response } from 'koa';
 import type { RequestInfo, GraphQLParams } from 'express-graphql';
+
+const { getGraphQLParams } = expressGraphQL;
 
 /**
  * Used to configure the graphqlHTTP middleware by providing a schema

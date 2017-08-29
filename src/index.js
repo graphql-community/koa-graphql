@@ -123,11 +123,9 @@ function graphqlHTTP(options: Options): Middleware {
       // the asynchronous process below.
 
       // Resolve the Options to get OptionsData.
-      const optionsData = await Promise.resolve(
-        typeof options === 'function'
-          ? options(request, response, ctx)
-          : options,
-      );
+      const optionsData = await (typeof options === 'function'
+        ? options(request, response, ctx)
+        : options);
 
       // Assert that optionsData is in fact an Object.
       if (!optionsData || typeof optionsData !== 'object') {

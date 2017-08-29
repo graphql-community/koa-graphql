@@ -14,9 +14,9 @@ import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
 
-import type { DocumentNode, GraphQLError, GraphQLSchema } from 'graphql';
+import type { GraphQLError, GraphQLSchema } from 'graphql';
 import type { Context, Request, Response } from 'koa';
-import type { GraphQLParams } from 'express-graphql';
+import type { GraphQLParams, RequestInfo } from 'express-graphql';
 
 const { getGraphQLParams } = expressGraphQL;
 
@@ -81,31 +81,6 @@ export type OptionsData = {
    * A boolean to optionally enable GraphiQL mode.
    */
   graphiql?: ?boolean,
-};
-
-/**
- * All information about a GraphQL request.
- */
-type RequestInfo = {
-  /**
-   * The parsed GraphQL document.
-   */
-  document: ?DocumentNode,
-
-  /**
-   * The variable values used at runtime.
-   */
-  variables: ?{ [name: string]: mixed },
-
-  /**
-   * The (optional) operation name requested.
-   */
-  operationName: ?string,
-
-  /**
-   * The result of executing the operation.
-   */
-  result: ?mixed,
 };
 
 type Middleware = (ctx: Context) => Promise<void>;

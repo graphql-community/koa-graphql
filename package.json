@@ -88,7 +88,7 @@
     "eslint": "^4.3.0",
     "eslint-plugin-flowtype": "^2.35.0",
     "flow-bin": "^0.51.1",
-    "graphql": "^0.10.5",
+    "graphql": "^0.11.2",
     "isparta": "^4.0.0",
     "koa": "^2.2.0",
     "koa-mount": "^3.0.0",
@@ -101,6 +101,6 @@
     "supertest": "^3.0.0"
   },
   "peerDependencies": {
-    "graphql": "^0.10.0"
+    "graphql": "^0.10.0 || ^0.11.0"
   }
 }

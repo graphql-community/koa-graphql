@@ -1,6 +1,6 @@
 {
   "name": "koa-graphql",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Production ready GraphQL Koa middleware.",
   "contributors": [
     "Lee Byron <lee@leebyron.com> (http://leebyron.com/)",
@@ -15,17 +15,30 @@
     "type": "git",
     "url": "http://github.com/chentsulin/koa-graphql.git"
   },
-  "keywords": ["koa", "http", "graphql", "middleware", "api"],
+  "keywords": [
+    "koa",
+    "http",
+    "graphql",
+    "middleware",
+    "api"
+  ],
   "main": "dist/index.js",
   "directories": {
     "lib": "./dist"
   },
-  "files": ["dist", "README.md", "LICENSE", "PATENTS"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "PATENTS"
+  ],
   "options": {
     "mocha": "--harmony --require resources/mocha-bootload src/**/__tests__/**/*.js"
   },
   "babel": {
-    "presets": ["es2015"],
+    "presets": [
+      "es2015"
+    ],
     "plugins": [
       "transform-class-properties",
       "transform-flow-strip-types",

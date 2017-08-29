@@ -15,30 +15,17 @@
     "type": "git",
     "url": "http://github.com/chentsulin/koa-graphql.git"
   },
-  "keywords": [
-    "koa",
-    "http",
-    "graphql",
-    "middleware",
-    "api"
-  ],
+  "keywords": ["koa", "http", "graphql", "middleware", "api"],
   "main": "dist/index.js",
   "directories": {
     "lib": "./dist"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "PATENTS"
-  ],
+  "files": ["dist", "README.md", "LICENSE", "PATENTS"],
   "options": {
     "mocha": "--harmony --require resources/mocha-bootload src/**/__tests__/**/*.js"
   },
   "babel": {
-    "presets": [
-      "es2015"
-    ],
+    "presets": ["es2015"],
     "plugins": [
       "transform-class-properties",
       "transform-flow-strip-types",
@@ -68,7 +55,7 @@
   },
   "dependencies": {
     "babel-runtime": "^6.22.0",
-    "express-graphql": "^0.6.6",
+    "express-graphql": "^0.6.11",
     "http-errors": "^1.6.1",
     "thenify": "^3.2.1"
   },
@@ -82,18 +69,18 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.24.1",
     "babel-runtime": "^6.25.0",
-    "chai": "^4.1.0",
+    "chai": "^4.1.1",
     "co-body": "^5.1.1",
     "coveralls": "^2.13.1",
-    "eslint": "^4.3.0",
+    "eslint": "^4.4.1",
     "eslint-plugin-flowtype": "^2.35.0",
-    "flow-bin": "^0.51.1",
-    "graphql": "^0.10.5",
+    "flow-bin": "^0.52.0",
+    "graphql": "^0.11.2",
     "isparta": "^4.0.0",
     "koa": "^2.2.0",
     "koa-mount": "^3.0.0",
     "koa-session": "^5.0.0",
-    "mocha": "^3.4.2",
+    "mocha": "^3.5.0",
     "multer": "^1.3.0",
     "prettier": "^1.3.1",
     "raw-body": "^2.2.0",
@@ -101,6 +88,6 @@
     "supertest": "^3.0.0"
   },
   "peerDependencies": {
-    "graphql": "^0.10.0"
+    "graphql": "^0.10.0 || ^0.11.0"
   }
 }

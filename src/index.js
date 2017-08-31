@@ -291,7 +291,8 @@ function graphqlHTTP(options: Options): Middleware {
       response.body = payload;
     } else {
       // Otherwise, present JSON directly.
-      const payload = JSON.stringify(result, null, pretty ? 2 : 0);
+      const body = response.body || {};
+      const payload = JSON.stringify(Object.assign({}, body, result), null, pretty ? 2 : 0);
       response.type = 'application/json';
       response.body = payload;
     }

@@ -86,6 +86,7 @@ declare class Request {
   get: (field: string) => ?string,
   inspect: () => ?Object,
   toJSON: () => Object,
+  body: mixed,
 }
 
 declare class Response {

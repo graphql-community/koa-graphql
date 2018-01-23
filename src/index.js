@@ -57,7 +57,7 @@ export type OptionsData = {
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
    */
-  formatError?: ?(error: GraphQLError) => mixed,
+  formatError?: ?(error: GraphQLError, context?: ?any) => mixed,
 
   /**
    * An optional array of validation rules that will be applied on the document
@@ -276,8 +276,8 @@ function graphqlHTTP(options: Options): Middleware {
     }
     // Format any encountered errors.
     if (result && result.errors) {
-      (result: any).errors = result.errors.map(err =>
-        (formatErrorFn || formatError)(err, context),
+      (result: any).errors = result.errors.map(
+        err => (formatErrorFn ? formatErrorFn(err, context) : formatError(err)),
       );
     }
 

@@ -276,7 +276,7 @@ function graphqlHTTP(options: Options): Middleware {
     }
     // Format any encountered errors.
     if (result && result.errors) {
-      (result: any).errors = result.errors.map(formatErrorFn || formatError);
+      (result: any).errors = result.errors.map(err => (formatErrorFn || formatError)(err, context));
     }
 
     // If allowed to show GraphiQL, present it instead of JSON.

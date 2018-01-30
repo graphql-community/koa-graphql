@@ -275,7 +275,7 @@ During development, it's useful to get more information from errors, such as
 stack traces. Providing a function to `formatError` enables this:
 
 ```js
-formatError: error => ({
+formatError: (error, ctx) => ({
   message: error.message,
   locations: error.locations,
   stack: error.stack,

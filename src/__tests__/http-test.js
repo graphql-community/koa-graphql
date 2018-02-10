@@ -1185,9 +1185,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
-            message:
-              'Syntax Error GraphQL request (1:1) ' +
-              'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n',
+            message: 'Syntax Error: Unexpected Name "syntaxerror"',
             locations: [{ line: 1, column: 1 }],
           },
         ],

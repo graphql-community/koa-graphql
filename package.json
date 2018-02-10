@@ -1,6 +1,6 @@
 {
   "name": "koa-graphql",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Production ready GraphQL Koa middleware.",
   "contributors": [
     "Lee Byron <lee@leebyron.com> (http://leebyron.com/)",

@@ -272,7 +272,14 @@ function graphqlHTTP(options: Options): Middleware {
     // the resulting JSON payload.
     // http://facebook.github.io/graphql/#sec-Data
     if (result && result.data === null) {
-      response.status = 500;
+      // $FlowFixMe
+      const errorWithStatus = result.errors.find(error => error.originalError.status !== undefined);
+      if (errorWithStatus !== undefined) {
+        // $FlowFixMe
+        response.status = errorWithStatus.originalError.status;
+      } else {
+        response.status = 500;
+      }
     }
     // Format any encountered errors.
     if (result && result.errors) {

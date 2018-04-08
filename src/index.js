@@ -14,7 +14,12 @@ import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
 
-import type { GraphQLError, GraphQLSchema } from 'graphql';
+import type {
+  GraphQLError,
+  GraphQLSchema,
+  ValidationContext,
+  ASTVisitor,
+} from 'graphql';
 import type { Context, Request, Response } from 'koa';
 import type { GraphQLParams, RequestInfo } from 'express-graphql';
 
@@ -63,7 +68,7 @@ export type OptionsData = {
    * An optional array of validation rules that will be applied on the document
    * in additional to those defined by the GraphQL spec.
    */
-  validationRules?: ?Array<mixed>,
+  validationRules?: ?Array<(ValidationContext) => ASTVisitor>,
 
   /**
    * An optional function for adding additional metadata to the GraphQL response
@@ -131,7 +136,7 @@ function graphqlHTTP(options: Options): Middleware {
       if (!optionsData || typeof optionsData !== 'object') {
         throw new Error(
           'GraphQL middleware option function must return an options object ' +
-            'or a promise which will be resolved to an options object.',
+            'or a promise which will be resolved to an options object.'
         );
       }
 
@@ -219,7 +224,7 @@ function graphqlHTTP(options: Options): Middleware {
             throw httpError(
               405,
               `Can only perform a ${operationAST.operation} operation ` +
-                'from a POST request.',
+                'from a POST request.'
             );
           }
         }
@@ -233,8 +238,8 @@ function graphqlHTTP(options: Options): Middleware {
               rootValue,
               context,
               variables,
-              operationName,
-            ),
+              operationName
+            )
           );
         } catch (contextError) {
           // Return 400: Bad Request if any execution context errors exist.
@@ -252,7 +257,7 @@ function graphqlHTTP(options: Options): Middleware {
             variables,
             operationName,
             result,
-          }),
+          })
         ).then(extensions => {
           if (extensions && typeof extensions === 'object') {
             (result: any).extensions = extensions;
@@ -277,7 +282,7 @@ function graphqlHTTP(options: Options): Middleware {
     // Format any encountered errors.
     if (result && result.errors) {
       (result: any).errors = result.errors.map(
-        err => (formatErrorFn ? formatErrorFn(err, context) : formatError(err)),
+        err => (formatErrorFn ? formatErrorFn(err, context) : formatError(err))
       );
     }
 

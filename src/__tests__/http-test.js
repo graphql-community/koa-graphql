@@ -499,10 +499,12 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send({
-        query: 'query helloWho($who: String){ test(who: $who) }',
-        variables: JSON.stringify({ who: 'Dolly' }),
-      });
+      const response = await request(app.listen())
+        .post(urlString())
+        .send({
+          query: 'query helloWho($who: String){ test(who: $who) }',
+          variables: JSON.stringify({ who: 'Dolly' }),
+        });
 
       expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
@@ -519,10 +521,12 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send({
-        query: 'query helloWho($who: String){ test(who: $who) }',
-        variables: { who: 'Dolly' },
-      });
+      const response = await request(app.listen())
+        .post(urlString())
+        .send({
+          query: 'query helloWho($who: String){ test(who: $who) }',
+          variables: { who: 'Dolly' },
+        });
 
       expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
@@ -539,12 +543,14 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send(
-        stringify({
-          query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: JSON.stringify({ who: 'Dolly' }),
-        }),
-      );
+      const response = await request(app.listen())
+        .post(urlString())
+        .send(
+          stringify({
+            query: 'query helloWho($who: String){ test(who: $who) }',
+            variables: JSON.stringify({ who: 'Dolly' }),
+          }),
+        );
 
       expect(response.text).to.equal('{"data":{"test":"Hello Dolly"}}');
     });
@@ -635,8 +641,10 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send({
-        query: `
+      const response = await request(app.listen())
+        .post(urlString())
+        .send({
+          query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
             query helloDolly { test(who: "Dolly"), ...shared }
@@ -644,8 +652,8 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-        operationName: 'helloWorld',
-      });
+          operationName: 'helloWorld',
+        });
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {

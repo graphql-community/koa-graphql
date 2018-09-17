@@ -46,6 +46,7 @@ add "&raw" to the end of the URL within a browser.
   <meta charset="utf-8" />
   <title>GraphiQL</title>
   <meta name="robots" content="noindex" />
+  <meta name="referrer" content="origin">
   <style>
     html, body {
       height: 100%;

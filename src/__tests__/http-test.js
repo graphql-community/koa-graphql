@@ -1,7 +1,5 @@
 /* @flow strict */
 
-// 80+ char lines are useful in describe/it, so ignore in this file.
-/* eslint-disable max-len */
 /* eslint-disable callback-return */
 
 import { expect } from 'chai';

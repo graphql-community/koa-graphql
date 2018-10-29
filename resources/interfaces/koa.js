@@ -1,4 +1,4 @@
-/* @flow */
+/* @flow strict */
 /* Flow declarations for koa requests and responses */
 /* eslint-disable no-unused-vars */
 declare class Context {

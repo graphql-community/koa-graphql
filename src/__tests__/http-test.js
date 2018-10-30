@@ -1421,6 +1421,38 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('allows for custom error formatting of poorly formed requests', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            formatError(error) {
+              return { message: 'Custom error format: ' + error.message };
+            },
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          variables: 'who:You',
+          query: 'query helloWho($who: String){ test(who: $who) }',
+        }),
+      );
+
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        errors: [
+          {
+            message: 'Custom error format: Variables are invalid JSON.',
+          },
+        ],
+      });
+    });
+
     it('handles invalid variables', async () => {
       const app = server();
 

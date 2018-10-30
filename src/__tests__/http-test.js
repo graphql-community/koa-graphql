@@ -1464,7 +1464,7 @@ describe('GraphQL-HTTP tests', () => {
           }),
         ),
       );
-       
+
       const response = await request(app.listen())
         .post(urlString())
         .send({

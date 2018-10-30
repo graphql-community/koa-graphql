@@ -43,7 +43,7 @@ export type OptionsData = {
   schema: GraphQLSchema,
 
   /**
-   * A value to pass as the context to the graphql() function.
+   * A value to pass as the context to this middleware.
    */
   context?: ?mixed,
 
@@ -275,6 +275,7 @@ function graphqlHTTP(options: Options): Middleware {
             variables,
             operationName,
             result,
+            context,
           }),
         ).then(extensions => {
           if (extensions && typeof extensions === 'object') {

@@ -2,6 +2,7 @@
 
 import {
   Source,
+  validateSchema,
   parse,
   validate,
   execute,
@@ -193,6 +194,14 @@ function graphqlHTTP(options: Options): Middleware {
             return resolve(null);
           }
           throw httpError(400, 'Must provide query string.');
+        }
+
+        // Validate Schema
+        const schemaValidationErrors = validateSchema(schema);
+        if (schemaValidationErrors.length > 0) {
+          // Return 500: Internal Server Error if invalid schema.
+          response.status = 500;
+          return resolve({ errors: schemaValidationErrors });
         }
 
         // GraphQL source.

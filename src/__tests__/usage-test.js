@@ -3,6 +3,7 @@ import { describe, it } from 'mocha';
 import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
+import { GraphQLSchema } from 'graphql';
 import graphqlHTTP from '..';
 
 describe('Useful errors when incorrectly used', () => {
@@ -74,6 +75,24 @@ describe('Useful errors when incorrectly used', () => {
     expect(JSON.parse(response.text)).to.deep.equal({
       errors: [
         { message: 'GraphQL middleware options must contain a schema.' },
+      ],
+    });
+  });
+
+  it('validates schema before executing request', async () => {
+    const schema = new GraphQLSchema({ directives: [null] });
+
+    const app = new Koa();
+
+    app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve({ schema }))));
+
+    const response = await request(app.listen()).get('/graphql?query={test}');
+
+    expect(response.status).to.equal(500);
+    expect(JSON.parse(response.text)).to.deep.equal({
+      errors: [
+        { message: 'Query root type must be provided.' },
+        { message: 'Expected directive but got: null.' },
       ],
     });
   });

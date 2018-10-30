@@ -59,6 +59,9 @@ const QueryRootType = new GraphQLObjectType({
         return (context: any).foo;
       },
     },
+    missingResolver: {
+      type: GraphQLString,
+    },
   },
 });
 
@@ -344,6 +347,39 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           context: 'testValue',
+        },
+      });
+    });
+
+    it('Allows passing in a fieldResolver', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            context: 'testValue',
+            fieldResolver() {
+              return 'fieldResolver data';
+            },
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          operationName: 'TestQuery',
+          query: `
+            query TestQuery { missingResolver }
+          `,
+        }),
+      );
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: {
+          missingResolver: 'fieldResolver data',
         },
       });
     });

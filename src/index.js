@@ -14,7 +14,11 @@ import httpError from 'http-errors';
 
 import { renderGraphiQL } from './renderGraphiQL';
 
-import type { GraphQLError, GraphQLSchema } from 'graphql';
+import type {
+  GraphQLError,
+  GraphQLSchema,
+  GraphQLFieldResolver,
+} from 'graphql';
 import type { Context, Request, Response } from 'koa';
 import type { GraphQLParams, RequestInfo } from 'express-graphql';
 
@@ -81,6 +85,13 @@ export type OptionsData = {
    * A boolean to optionally enable GraphiQL mode.
    */
   graphiql?: ?boolean,
+
+  /**
+   * A resolver function to use when one is not provided by the schema.
+   * If not provided, the default field resolver is used (which looks for a
+   * value or method on the source value with the field's name).
+   */
+  fieldResolver?: ?GraphQLFieldResolver<any, any>,
 };
 
 type Middleware = (ctx: Context) => Promise<void>;
@@ -105,6 +116,7 @@ function graphqlHTTP(options: Options): Middleware {
     let schema;
     let context;
     let rootValue;
+    let fieldResolver;
     let pretty;
     let graphiql;
     let formatErrorFn;
@@ -144,6 +156,7 @@ function graphqlHTTP(options: Options): Middleware {
       schema = optionsData.schema;
       context = optionsData.context || ctx;
       rootValue = optionsData.rootValue;
+      fieldResolver = optionsData.fieldResolver;
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
       formatErrorFn = optionsData.formatError;
@@ -234,6 +247,7 @@ function graphqlHTTP(options: Options): Middleware {
               context,
               variables,
               operationName,
+              fieldResolver,
             ),
           );
         } catch (contextError) {

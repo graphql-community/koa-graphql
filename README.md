@@ -105,6 +105,8 @@ The `graphqlHTTP` function accepts the following options:
   * **`validationRules`**: Optional additional validation rules queries must
     satisfy in addition to those defined by the GraphQL spec.
 
+  * **`fieldResolver`**
+
 
 ## HTTP Usage
 

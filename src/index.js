@@ -259,6 +259,7 @@ function graphqlHTTP(options: Options): Middleware {
               fieldResolver,
             ),
           );
+          response.status = 200;
         } catch (contextError) {
           // Return 400: Bad Request if any execution context errors exist.
           response.status = 400;
@@ -295,7 +296,7 @@ function graphqlHTTP(options: Options): Middleware {
     // Note: Information about the error itself will still be contained in
     // the resulting JSON payload.
     // http://facebook.github.io/graphql/#sec-Data
-    if (result && result.data === null) {
+    if (response.status === 200 && result && !result.data) {
       response.status = 500;
     }
     // Format any encountered errors.

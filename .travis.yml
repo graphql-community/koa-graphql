@@ -2,11 +2,12 @@ sudo: false
 
 language: node_js
 
-# https://github.com/nodejs/LTS
+# https://github.com/nodejs/Release
 node_js:
-  - "stable"
-  - "9"
-  - "8"
+  - '11'
+  - '10'
+  - '8'
+  - '6'
 
 git:
   depth: 5

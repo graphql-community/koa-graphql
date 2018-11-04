@@ -1,7 +1,11 @@
 [ignore]
-.*/dist/.*
+<PROJECT_ROOT>/dist/.*
+
+[untyped]
 .*/node_modules/flow-bin/.*
 .*/node_modules/y18n/.*
+.*/node_modules/graphql/utilities/buildASTSchema.js.flow
+.*/node_modules/express/.*
 
 [libs]
 ./resources/interfaces

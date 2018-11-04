@@ -19,6 +19,8 @@ import type {
   GraphQLError,
   GraphQLSchema,
   GraphQLFieldResolver,
+  ValidationContext,
+  ASTVisitor,
 } from 'graphql';
 import type { Context, Request, Response } from 'koa';
 import type { GraphQLParams, RequestInfo } from 'express-graphql';
@@ -68,7 +70,7 @@ export type OptionsData = {
    * An optional array of validation rules that will be applied on the document
    * in additional to those defined by the GraphQL spec.
    */
-  validationRules?: ?Array<mixed>,
+  validationRules?: ?Array<(ValidationContext) => ASTVisitor>,
 
   /**
    * An optional function for adding additional metadata to the GraphQL response

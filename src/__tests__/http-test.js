@@ -1478,7 +1478,7 @@ describe('GraphQL-HTTP tests', () => {
           {
             locations: [{ column: 16, line: 1 }],
             message:
-              'Variable "$who" got invalid value ["Dolly","Jonty"]; Expected type String; String cannot represent an array value: [Dolly,Jonty]',
+              'Variable "$who" got invalid value ["Dolly", "Jonty"]; Expected type String; String cannot represent a non string value: ["Dolly", "Jonty"]',
           },
         ],
       });

@@ -23,7 +23,7 @@
     "api"
   ],
   "engines": {
-    "node": "6.x || 8.x || >= 10.x"
+    "node": ">= 6.x"
   },
   "main": "dist/index.js",
   "directories": {
@@ -71,7 +71,7 @@
   },
   "dependencies": {
     "babel-runtime": "^6.25.0",
-    "express-graphql": "^0.6.11",
+    "express-graphql": "^0.7.1",
     "http-errors": "^1.6.2",
     "thenify": "^3.3.0"
   },
@@ -91,7 +91,7 @@
     "eslint-plugin-flowtype": "^2.43.0",
     "eslint-plugin-prettier": "^2.6.0",
     "flow-bin": "^0.65.0",
-    "graphql": "^0.13.0",
+    "graphql": "^14.0.2",
     "isparta": "^4.0.0",
     "koa": "^2.4.1",
     "koa-mount": "^3.0.0",
@@ -104,6 +104,6 @@
     "supertest": "^3.0.0"
   },
   "peerDependencies": {
-    "graphql": "^0.12.0 || ^0.13.0"
+    "graphql": "^0.12.0 || ^0.13.0 || ^14.0.0"
   }
 }

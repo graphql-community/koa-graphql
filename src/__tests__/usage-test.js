@@ -16,7 +16,12 @@ describe('Useful errors when incorrectly used', () => {
   it('requires option factory function to return object', async () => {
     const app = new Koa();
 
-    app.use(mount('/graphql', graphqlHTTP(() => null)));
+    app.use(
+      mount(
+        '/graphql',
+        graphqlHTTP(() => null),
+      ),
+    );
 
     const response = await request(app.listen()).get('/graphql?query={test}');
 
@@ -34,7 +39,12 @@ describe('Useful errors when incorrectly used', () => {
   it('requires option factory function to return object or promise of object', async () => {
     const app = new Koa();
 
-    app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve(null))));
+    app.use(
+      mount(
+        '/graphql',
+        graphqlHTTP(() => Promise.resolve(null)),
+      ),
+    );
 
     const response = await request(app.listen()).get('/graphql?query={test}');
 
@@ -52,7 +62,12 @@ describe('Useful errors when incorrectly used', () => {
   it('requires option factory function to return object with schema', async () => {
     const app = new Koa();
 
-    app.use(mount('/graphql', graphqlHTTP(() => ({}))));
+    app.use(
+      mount(
+        '/graphql',
+        graphqlHTTP(() => ({})),
+      ),
+    );
 
     const response = await request(app.listen()).get('/graphql?query={test}');
 
@@ -67,7 +82,12 @@ describe('Useful errors when incorrectly used', () => {
   it('requires option factory function to return object or promise of object with schema', async () => {
     const app = new Koa();
 
-    app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve({}))));
+    app.use(
+      mount(
+        '/graphql',
+        graphqlHTTP(() => Promise.resolve({})),
+      ),
+    );
 
     const response = await request(app.listen()).get('/graphql?query={test}');
 
@@ -84,7 +104,12 @@ describe('Useful errors when incorrectly used', () => {
 
     const app = new Koa();
 
-    app.use(mount('/graphql', graphqlHTTP(() => Promise.resolve({ schema }))));
+    app.use(
+      mount(
+        '/graphql',
+        graphqlHTTP(() => Promise.resolve({ schema })),
+      ),
+    );
 
     const response = await request(app.listen()).get('/graphql?query={test}');
 

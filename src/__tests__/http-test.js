@@ -95,7 +95,7 @@ function promiseTo(fn) {
 describe('test harness', () => {
   it('resolves callback promises', async () => {
     const resolveValue = {};
-    const result = await promiseTo(cb => cb(null, resolveValue));
+    const result = await promiseTo((cb) => cb(null, resolveValue));
     expect(result).to.equal(resolveValue);
   });
 
@@ -103,7 +103,7 @@ describe('test harness', () => {
     const rejectError = new Error();
     let caught;
     try {
-      await promiseTo(cb => cb(rejectError));
+      await promiseTo((cb) => cb(rejectError));
     } catch (error) {
       caught = error;
     }
@@ -113,7 +113,7 @@ describe('test harness', () => {
 
 function server() {
   const app = new Koa();
-  app.on('error', error => {
+  app.on('error', (error) => {
     // eslint-disable-next-line no-console
     console.log('App encountered an error:', error);
   });
@@ -675,10 +675,8 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen())
-        .post(urlString())
-        .send({
-          query: `
+      const response = await request(app.listen()).post(urlString()).send({
+        query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
             query helloDolly { test(who: "Dolly"), ...shared }
@@ -686,8 +684,8 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-          operationName: 'helloWorld',
-        });
+        operationName: 'helloWorld',
+      });
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -771,7 +769,7 @@ describe('GraphQL-HTTP tests', () => {
 
       const data = { query: '{ test(who: "World") }' };
       const json = JSON.stringify(data);
-      const gzippedJson = await promiseTo(cb => zlib.gzip(json, cb));
+      const gzippedJson = await promiseTo((cb) => zlib.gzip(json, cb));
 
       const req = request(app.listen())
         .post(urlString())
@@ -801,7 +799,7 @@ describe('GraphQL-HTTP tests', () => {
 
       const data = { query: '{ test(who: "World") }' };
       const json = JSON.stringify(data);
-      const deflatedJson = await promiseTo(cb => zlib.deflate(json, cb));
+      const deflatedJson = await promiseTo((cb) => zlib.deflate(json, cb));
 
       const req = request(app.listen())
         .post(urlString())
@@ -898,7 +896,7 @@ describe('GraphQL-HTTP tests', () => {
 
     it('allows for pre-parsed POST using application/graphql', async () => {
       const app = server();
-      app.use(async function(ctx, next) {
+      app.use(async function (ctx, next) {
         if (ctx.is('application/graphql')) {
           ctx.request.body = await parse.text(ctx);
         }
@@ -922,7 +920,7 @@ describe('GraphQL-HTTP tests', () => {
 
     it('does not accept unknown pre-parsed POST string', async () => {
       const app = server();
-      app.use(async function(ctx, next) {
+      app.use(async function (ctx, next) {
         if (ctx.is('*/*')) {
           ctx.request.body = await parse.text(ctx);
         }
@@ -943,7 +941,7 @@ describe('GraphQL-HTTP tests', () => {
 
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
       const app = server();
-      app.use(async function(ctx, next) {
+      app.use(async function (ctx, next) {
         if (ctx.is('*/*')) {
           const req = ctx.req;
           ctx.request.body = await getRawBody(req, {
@@ -1001,7 +999,7 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP(req => {
+          graphqlHTTP((req) => {
             return {
               schema: TestSchema,
               pretty: req.query.pretty === '1',
@@ -1832,7 +1830,7 @@ describe('GraphQL-HTTP tests', () => {
   });
 
   describe('Custom validation rules', () => {
-    const AlwaysInvalidRule = function(context) {
+    const AlwaysInvalidRule = function (context) {
       return {
         enter() {
           context.reportError(
@@ -1892,7 +1890,7 @@ describe('GraphQL-HTTP tests', () => {
       const app = server();
       app.keys = ['some secret hurr'];
       app.use(session(app));
-      app.use(async function(ctx, next) {
+      app.use(async function (ctx, next) {
         ctx.session.id = 'me';
         await next();
       });

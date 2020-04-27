@@ -4,9 +4,9 @@ language: node_js
 
 # https://github.com/nodejs/Release
 node_js:
+  - '14'
   - '12'
   - '10'
-  - '8'
 
 git:
   depth: 5

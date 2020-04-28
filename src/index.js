@@ -188,7 +188,7 @@ function graphqlHTTP(options: Options): Middleware {
       operationName = params.operationName;
       showGraphiQL = graphiql && canDisplayGraphiQL(request, params);
 
-      result = await new Promise(resolve => {
+      result = await new Promise((resolve) => {
         // If there is no query, but GraphiQL will be displayed, do not produce
         // a result, otherwise return a 400: Bad Request.
         if (!query) {
@@ -280,7 +280,7 @@ function graphqlHTTP(options: Options): Middleware {
             result,
             context,
           }),
-        ).then(extensions => {
+        ).then((extensions) => {
           if (extensions && typeof extensions === 'object') {
             (result: any).extensions = extensions;
           }
@@ -303,8 +303,8 @@ function graphqlHTTP(options: Options): Middleware {
     }
     // Format any encountered errors.
     if (result && result.errors) {
-      (result: any).errors = result.errors.map(
-        err => (formatErrorFn ? formatErrorFn(err, context) : formatError(err)),
+      (result: any).errors = result.errors.map((err) =>
+        formatErrorFn ? formatErrorFn(err, context) : formatError(err),
       );
     }
 

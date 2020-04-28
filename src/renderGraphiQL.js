@@ -1,18 +1,55 @@
 /* @flow strict */
 
+type EditorThemeParam = {
+  name: string,
+  url: string,
+} | string;
+
 type GraphiQLData = {
   query: ?string,
   variables: ?{ [param: string]: mixed },
   operationName: ?string,
   result?: mixed,
+  editorTheme?: EditorThemeParam
 };
+
+type EditorTheme = {
+  name: string,
+  link: string
+} | {};
 
 // Current latest version of GraphiQL.
 const GRAPHIQL_VERSION = '0.17.5';
+// Current latest version of codeMirror.
+const CODE_MIRROR_VERSION = '5.53.2';
 
 // Ensures string values are safe to be used within a <script> tag.
 function safeSerialize(data): string {
   return data ? JSON.stringify(data).replace(/\//g, '\\/') : 'undefined';
+}
+
+function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
+  if (!editorTheme) {
+    return {};
+  }
+  if (typeof editorTheme === 'string') {
+    return {
+      name: editorTheme,
+      link: `<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/${CODE_MIRROR_VERSION}/theme/${editorTheme}.css" rel="stylesheet" />`
+    };
+  }
+  if (typeof editorTheme === 'object' &&
+    editorTheme.name && typeof editorTheme.name === 'string' &&
+    editorTheme.url && typeof editorTheme.url === 'string'
+  ) {
+    return {
+      link: `<link href="${editorTheme.url}" rel="stylesheet" />`,
+      name: editorTheme.name
+    };
+  }
+  throw Error('invalid parameter "editorTheme": should be undefined/null, string or ' +
+    `{name: string, url: string} but provided is "${editorTheme}"`
+  );
 }
 
 /**
@@ -31,6 +68,7 @@ export function renderGraphiQL(data: GraphiQLData): string {
     ? JSON.stringify(data.result, null, 2)
     : null;
   const operationName = data.operationName;
+  const editorTheme = getEditorThemeParams(data.editorTheme);
 
   return `<!--
 The request to this GraphQL server provided the header "Accept: text/html"
@@ -57,6 +95,7 @@ add "&raw" to the end of the URL within a browser.
     }
   </style>
   <link href="//cdn.jsdelivr.net/npm/graphiql@${GRAPHIQL_VERSION}/graphiql.css" rel="stylesheet" />
+  ${editorTheme.link || ''}
   <script src="//cdn.jsdelivr.net/es6-promise/4.0.5/es6-promise.auto.min.js"></script>
   <script src="//cdn.jsdelivr.net/fetch/0.9.0/fetch.min.js"></script>
   <script src="//cdn.jsdelivr.net/react/15.4.2/react.min.js"></script>
@@ -140,6 +179,7 @@ add "&raw" to the end of the URL within a browser.
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
         onEditOperationName: onEditOperationName,
+        editorTheme: ${editorTheme.name && safeSerialize(editorTheme.name)},
         query: ${safeSerialize(queryString)},
         response: ${safeSerialize(resultString)},
         variables: ${safeSerialize(variablesString)},

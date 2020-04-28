@@ -87,7 +87,7 @@ export type OptionsData = {
   /**
    * A boolean to optionally enable GraphiQL mode.
    */
-  graphiql?: ?boolean,
+  graphiql?: ?boolean | {},
 
   /**
    * A resolver function to use when one is not provided by the schema.
@@ -310,12 +310,12 @@ function graphqlHTTP(options: Options): Middleware {
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      const payload = renderGraphiQL({
+      const payload = renderGraphiQL(Object.assign({
         query,
         variables,
         operationName,
         result,
-      });
+      }, graphiql));
       response.type = 'text/html';
       response.body = payload;
     } else {

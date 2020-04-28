@@ -138,7 +138,7 @@ If not found in the query-string, it will look in the POST request body.
 If a previous middleware has already parsed the POST body, the `request.body`
 value will be used. Use [`multer`][] or a similar middleware to add support
 for `multipart/form-data` content, which may be useful for GraphQL mutations
-involving uploading files. See an [example using multer](https://github.com/chentsulin/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
+involving uploading files. See an [example using multer](https://github.com/graphql-community/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
 
 If the POST body has not yet been parsed, koa-graphql will interpret it
 depending on the provided *Content-Type* header.
@@ -292,8 +292,8 @@ formatError: (error, ctx) => ({
 
 ### Examples
 
-- [koa-graphql-relay-example](https://github.com/chentsulin/koa-graphql-relay-example)
-- [tests](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js)
+- [koa-graphql-relay-example](https://github.com/graphql-community/koa-graphql-relay-example)
+- [tests](https://github.com/graphql-community/koa-graphql/blob/master/src/__tests__/http-test.js)
 
 
 ### Other relevant projects
@@ -315,8 +315,8 @@ BSD-3-Clause
 [`koa-session`]: https://github.com/koajs/session
 [npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/koa-graphql
-[travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg?branch=master
-[travis-url]: https://travis-ci.org/chentsulin/koa-graphql
+[travis-image]: https://travis-ci.org/graphql-community/koa-graphql.svg?branch=master
+[travis-url]: https://travis-ci.org/graphql-community/koa-graphql
 [coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/chentsulin/koa-graphql?branch=master
 [david_img]: https://david-dm.org/chentsulin/koa-graphql.svg

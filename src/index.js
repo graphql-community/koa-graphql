@@ -322,12 +322,17 @@ function graphqlHTTP(options: Options): Middleware {
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      const payload = renderGraphiQL(Object.assign({
-        query,
-        variables,
-        operationName,
-        result,
-      }, graphiql));
+      const payload = renderGraphiQL(
+        Object.assign(
+          {
+            query,
+            variables,
+            operationName,
+            result,
+          },
+          graphiql,
+        ),
+      );
       response.type = 'text/html';
       response.body = payload;
     } else {

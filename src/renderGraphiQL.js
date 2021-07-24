@@ -1,22 +1,26 @@
 /* @flow strict */
 
-type EditorThemeParam = {
-  name: string,
-  url: string,
-} | string;
+type EditorThemeParam =
+  | {
+      name: string,
+      url: string,
+    }
+  | string;
 
 type GraphiQLData = {
   query: ?string,
   variables: ?{ [param: string]: mixed },
   operationName: ?string,
   result?: mixed,
-  editorTheme?: EditorThemeParam
+  editorTheme?: EditorThemeParam,
 };
 
-type EditorTheme = {
-  name: string,
-  link: string
-} | {};
+type EditorTheme =
+  | {
+      name: string,
+      link: string,
+    }
+  | {};
 
 // Current latest version of GraphiQL.
 const GRAPHIQL_VERSION = '0.17.5';
@@ -35,20 +39,24 @@ function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
   if (typeof editorTheme === 'string') {
     return {
       name: editorTheme,
-      link: `<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/${CODE_MIRROR_VERSION}/theme/${editorTheme}.css" rel="stylesheet" />`
+      link: `<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/${CODE_MIRROR_VERSION}/theme/${editorTheme}.css" rel="stylesheet" />`,
     };
   }
-  if (typeof editorTheme === 'object' &&
-    editorTheme.name && typeof editorTheme.name === 'string' &&
-    editorTheme.url && typeof editorTheme.url === 'string'
+  if (
+    typeof editorTheme === 'object' &&
+    editorTheme.name &&
+    typeof editorTheme.name === 'string' &&
+    editorTheme.url &&
+    typeof editorTheme.url === 'string'
   ) {
     return {
       link: `<link href="${editorTheme.url}" rel="stylesheet" />`,
-      name: editorTheme.name
+      name: editorTheme.name,
     };
   }
-  throw Error('invalid parameter "editorTheme": should be undefined/null, string or ' +
-    `{name: string, url: string} but provided is "${editorTheme}"`
+  throw Error(
+    'invalid parameter "editorTheme": should be undefined/null, string or ' +
+      `{name: string, url: string} but provided is "${editorTheme}"`,
   );
 }
 

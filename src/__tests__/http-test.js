@@ -22,7 +22,7 @@ import {
   GraphQLString,
   GraphQLError,
   BREAK,
-  execute
+  execute,
 } from 'graphql';
 import graphqlHTTP from '../';
 
@@ -676,8 +676,10 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send({
-        query: `
+      const response = await request(app.listen())
+        .post(urlString())
+        .send({
+          query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
             query helloDolly { test(who: "Dolly"), ...shared }
@@ -685,8 +687,8 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-        operationName: 'helloWorld',
-      });
+          operationName: 'helloWorld',
+        });
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -2037,7 +2039,7 @@ describe('GraphQL-HTTP tests', () => {
               return result;
             },
           })),
-        )
+        ),
       );
 
       const response = await request(app.listen())
@@ -2062,7 +2064,7 @@ describe('GraphQL-HTTP tests', () => {
               throw new Error('I did something wrong');
             },
           })),
-        )
+        ),
       );
 
       const response = await request(app.listen())

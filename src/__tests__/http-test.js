@@ -2023,12 +2023,15 @@ describe('GraphQL-HTTP tests', () => {
     it('allow to replace default execute', async () => {
       const app = server();
 
+      let seenExecuteArgs;
+
       app.use(
         mount(
           urlString(),
           graphqlHTTP(() => ({
             schema: TestSchema,
             async customExecuteFn(...args) {
+              seenExecuteArgs = args;
               const result = await Promise.resolve(execute(...args));
               result.data.test2 = 'Modification';
               return result;
@@ -2044,6 +2047,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World","test2":"Modification"}}',
       );
+      expect(seenExecuteArgs).to.not.equal(null);
     });
 
     it('catches errors thrown from custom execute function', async () => {

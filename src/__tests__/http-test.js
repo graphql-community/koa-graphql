@@ -22,6 +22,7 @@ import {
   GraphQLString,
   GraphQLError,
   BREAK,
+  execute
 } from 'graphql';
 import graphqlHTTP from '../';
 
@@ -2014,6 +2015,59 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}',
+      );
+    });
+  });
+
+  describe('Custom execute', () => {
+    it('allow to replace default execute', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            async customExecuteFn(...args) {
+              const result = await Promise.resolve(execute(...args));
+              result.data.test2 = 'Modification';
+              return result;
+            },
+          })),
+        )
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World","test2":"Modification"}}',
+      );
+    });
+
+    it('catches errors thrown from custom execute function', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            customExecuteFn() {
+              throw new Error('I did something wrong');
+            },
+          })),
+        )
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(400);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"I did something wrong"}]}',
       );
     });
   });

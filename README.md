@@ -109,6 +109,8 @@ The `graphqlHTTP` function accepts the following options:
 
   * **`fieldResolver`**
 
+  * **`customExecuteFn`**: An optional function which will be used to execute
+    instead of default `execute` from `graphql-js`.
 
 ## HTTP Usage
 

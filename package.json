@@ -9,11 +9,11 @@
   ],
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/chentsulin/koa-graphql/issues"
+    "url": "https://github.com/graphql-community/koa-graphql/issues"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/chentsulin/koa-graphql.git"
+    "url": "http://github.com/graphql-community/koa-graphql.git"
   },
   "keywords": [
     "koa",

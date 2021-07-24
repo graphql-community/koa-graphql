@@ -55,8 +55,7 @@
     ]
   },
   "scripts": {
-    "prepublish": ". ./resources/prepublish.sh",
-    "test": "npm run lint && npm run check && npm run testonly",
+    "test": "npm run lint && npm run testonly",
     "testonly": "mocha $npm_package_options_mocha",
     "lint": "eslint src",
     "prettier": "prettier --write 'src/**/*.js'",

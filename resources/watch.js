@@ -11,13 +11,13 @@ const cmd = resolvePath(__dirname);
 const srcDir = resolvePath(cmd, '../src');
 
 function exec(command, options) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     const child = spawn(command, options, {
       cmd,
       env: process.env,
       stdio: 'inherit',
     });
-    child.on('exit', function(code) {
+    child.on('exit', function (code) {
       if (code === 0) {
         resolve(true);
       } else {
@@ -38,7 +38,7 @@ const watcher = sane(srcDir, { glob: ['**/*.js', '**/*.graphql'] })
   .on('delete', deleteFile)
   .on('change', changeFile);
 
-process.on('SIGINT', function() {
+process.on('SIGINT', function () {
   watcher.close();
   flowServer.kill();
   console.log(CLEARLINE + yellow(invert('stopped watching')));
@@ -91,15 +91,15 @@ function checkFiles(filepaths) {
 
   return parseFiles(filepaths)
     .then(() => runTests(filepaths))
-    .then(testSuccess =>
-      lintFiles(filepaths).then(lintSuccess =>
+    .then((testSuccess) =>
+      lintFiles(filepaths).then((lintSuccess) =>
         typecheckStatus().then(
-          typecheckSuccess => testSuccess && lintSuccess && typecheckSuccess,
+          (typecheckSuccess) => testSuccess && lintSuccess && typecheckSuccess,
         ),
       ),
     )
     .catch(() => false)
-    .then(success => {
+    .then((success) => {
       process.stdout.write(
         '\n' + (success ? '' : '\x07') + green(invert('watching...')),
       );
@@ -112,7 +112,7 @@ function parseFiles(filepaths) {
   console.log('Checking Syntax');
 
   return Promise.all(
-    filepaths.map(filepath => {
+    filepaths.map((filepath) => {
       if (isJS(filepath) && !isTest(filepath)) {
         return exec('babel', [
           '--optional',
@@ -144,12 +144,12 @@ function lintFiles(filepaths) {
 
   return filepaths.reduce(
     (prev, filepath) =>
-      prev.then(prevSuccess => {
+      prev.then((prevSuccess) => {
         if (isJS(filepath)) {
           process.stdout.write('  ' + filepath + ' ...');
           return exec('eslint', [srcPath(filepath)])
             .catch(() => false)
-            .then(success => {
+            .then((success) => {
               const msg =
                 CLEARLINE + '  ' + (success ? CHECK : X) + ' ' + filepath;
               console.log(msg);

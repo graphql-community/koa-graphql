@@ -25,10 +25,15 @@ const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 
-app.use(mount('/graphql', graphqlHTTP({
-  schema: MyGraphQLSchema,
-  graphiql: true
-})));
+app.use(
+  mount(
+    '/graphql',
+    graphqlHTTP({
+      schema: MyGraphQLSchema,
+      graphiql: true,
+    }),
+  ),
+);
 
 app.listen(4000);
 ```
@@ -43,10 +48,13 @@ const graphqlHTTP = require('koa-graphql');
 const app = new Koa();
 const router = new Router();
 
-router.all('/graphql', graphqlHTTP({
-  schema: MyGraphQLSchema,
-  graphiql: true
-}));
+router.all(
+  '/graphql',
+  graphqlHTTP({
+    schema: MyGraphQLSchema,
+    graphiql: true,
+  }),
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 ```
@@ -61,10 +69,17 @@ const graphqlHTTP = require('koa-graphql');
 
 const app = koa();
 
-app.use(mount('/graphql', convert.back(graphqlHTTP({
-  schema: MyGraphQLSchema,
-  graphiql: true
-}))));
+app.use(
+  mount(
+    '/graphql',
+    convert.back(
+      graphqlHTTP({
+        schema: MyGraphQLSchema,
+        graphiql: true,
+      }),
+    ),
+  ),
+);
 ```
 
 > NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
@@ -73,58 +88,62 @@ app.use(mount('/graphql', convert.back(graphqlHTTP({
 
 The `graphqlHTTP` function accepts the following options:
 
-  * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
-    A `schema` *must* be provided.
+- **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
+  A `schema` _must_ be provided.
 
-  * **`graphiql`**: If `true`, presents [GraphiQL][] when the route with a
-    `/graphiql` appended is loaded in a browser. We recommend that you set
-    `graphiql` to `true` when your app is in development, because it's
-    quite useful. You may or may not want it in production.
+- **`graphiql`**: If `true` or `object`, presents [GraphiQL][] when the route with a
+  `/graphiql` appended is loaded in a browser. We recommend that you set
+  `graphiql` to `true` when your app is in development, because it's
+  quite useful. By passing an object you may change the theme of GraphiQL.
+  Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
+  You may or may not want to turn on GraphiQL in production.
 
-  * **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
-    function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).
+- **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).
 
-  * **`context`**: A value to pass as the `context` to the `graphql()`
-    function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L123). If `context` is not provided, the
-    `ctx` object is passed as the context.
+- **`context`**: A value to pass as the `context` to the `graphql()`
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L123). If `context` is not provided, the
+  `ctx` object is passed as the context.
 
-  * **`pretty`**: If `true`, any JSON response will be pretty-printed.
+- **`pretty`**: If `true`, any JSON response will be pretty-printed.
 
-  * **`formatError`**: An optional function which will be used to format any
-    errors produced by fulfilling a GraphQL operation. If no function is
-    provided, GraphQL's default spec-compliant [`formatError`][] function will be used.
+- **`formatError`**: An optional function which will be used to format any
+  errors produced by fulfilling a GraphQL operation. If no function is
+  provided, GraphQL's default spec-compliant [`formatError`][] function will be used.
 
-  * **`extensions`**: An optional function for adding additional metadata to the
-    GraphQL response as a key-value object. The result will be added to
-    `"extensions"` field in the resulting JSON. This is often a useful place to
-    add development time metadata such as the runtime of a query or the amount
-    of resources consumed. This may be an async function. The function is
-    given one object as an argument: `{ document, variables, operationName, result, context }`.
+- **`extensions`**: An optional function for adding additional metadata to the
+  GraphQL response as a key-value object. The result will be added to
+  `"extensions"` field in the resulting JSON. This is often a useful place to
+  add development time metadata such as the runtime of a query or the amount
+  of resources consumed. This may be an async function. The function is
+  given one object as an argument: `{ document, variables, operationName, result, context }`.
 
-  * **`validationRules`**: Optional additional validation rules queries must
-    satisfy in addition to those defined by the GraphQL spec.
+- **`validationRules`**: Optional additional validation rules queries must
+  satisfy in addition to those defined by the GraphQL spec.
 
-  * **`fieldResolver`**
+- **`fieldResolver`**
 
+- **`customExecuteFn`**: An optional function which will be used to execute
+  instead of default `execute` from `graphql-js`.
 
 ## HTTP Usage
 
 Once installed at a path, `koa-graphql` will accept requests with
 the parameters:
 
-  * **`query`**: A string GraphQL document to be executed.
+- **`query`**: A string GraphQL document to be executed.
 
-  * **`variables`**: The runtime values to use for any GraphQL query variables
-    as a JSON object.
+- **`variables`**: The runtime values to use for any GraphQL query variables
+  as a JSON object.
 
-  * **`operationName`**: If the provided `query` contains multiple named
-    operations, this specifies which operation should be executed. If not
-    provided, a 400 error will be returned if the `query` contains multiple
-    named operations.
+- **`operationName`**: If the provided `query` contains multiple named
+  operations, this specifies which operation should be executed. If not
+  provided, a 400 error will be returned if the `query` contains multiple
+  named operations.
 
-  * **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
-    provided raw JSON will always be returned instead of GraphiQL even when
-    loaded from a browser.
+- **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
+  provided raw JSON will always be returned instead of GraphiQL even when
+  loaded from a browser.
 
 GraphQL will first look for each parameter in the URL's query-string:
 
@@ -140,16 +159,16 @@ for `multipart/form-data` content, which may be useful for GraphQL mutations
 involving uploading files. See an [example using multer](https://github.com/graphql-community/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
 
 If the POST body has not yet been parsed, koa-graphql will interpret it
-depending on the provided *Content-Type* header.
+depending on the provided _Content-Type_ header.
 
-  * **`application/json`**: the POST body will be parsed as a JSON
-    object of parameters.
+- **`application/json`**: the POST body will be parsed as a JSON
+  object of parameters.
 
-  * **`application/x-www-form-urlencoded`**: this POST body will be
-    parsed as a url-encoded string of key-value pairs.
+- **`application/x-www-form-urlencoded`**: this POST body will be
+  parsed as a url-encoded string of key-value pairs.
 
-  * **`application/graphql`**: The POST body will be parsed as GraphQL
-    query string, which provides the `query` parameter.
+- **`application/graphql`**: The POST body will be parsed as GraphQL
+  query string, which provides the `query` parameter.
 
 ## Combining with Other koa Middleware
 
@@ -166,17 +185,22 @@ const session = require('koa-session');
 const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
-app.keys = [ 'some secret hurr' ];
+app.keys = ['some secret hurr'];
 app.use(session(app));
-app.use(function *(next) {
+app.use(function* (next) {
   this.session.id = 'me';
   yield next;
 });
 
-app.use(mount('/graphql', graphqlHTTP({
-  schema: MySessionAwareGraphQLSchema,
-  graphiql: true
-})));
+app.use(
+  mount(
+    '/graphql',
+    graphqlHTTP({
+      schema: MySessionAwareGraphQLSchema,
+      graphiql: true,
+    }),
+  ),
+);
 ```
 
 Then in your type definitions, you can access the ctx via the third "context" argument in your `resolve` function:
@@ -189,12 +213,11 @@ new GraphQLObjectType({
       type: GraphQLString,
       resolve(parentValue, args, ctx) {
         // use `ctx.session` here
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
-
 
 ## Providing Extensions
 
@@ -216,23 +239,34 @@ const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 
-app.keys = [ 'some secret hurr' ];
+app.keys = ['some secret hurr'];
 app.use(session(app));
 
-const extensions = ({ document, variables, operationName, result, context }) => {
+const extensions = ({
+  document,
+  variables,
+  operationName,
+  result,
+  context,
+}) => {
   return {
     runTime: Date.now() - context.startTime,
   };
-}
+};
 
-app.use(mount('/graphql', graphqlHTTP(request => {
-  return {
-    schema: MyGraphQLSchema,
-    context: { startTime: Date.now() },
-    graphiql: true,
-    extensions,
-  };
-})));
+app.use(
+  mount(
+    '/graphql',
+    graphqlHTTP((request) => {
+      return {
+        schema: MyGraphQLSchema,
+        context: { startTime: Date.now() },
+        graphiql: true,
+        extensions,
+      };
+    }),
+  ),
+);
 ```
 
 When querying this endpoint, it would include this information in the result,
@@ -247,6 +281,45 @@ for example:
 }
 ```
 
+## Custom GraphiQL themes
+
+To use custom GraphiQL theme you should pass to `graphiql` option an object with
+the property `editorTheme`. It could be a string with the name of a theme from `CodeMirror`
+
+```js
+router.all(
+  '/graphql',
+  graphqlHTTP({
+    schema: MyGraphQLSchema,
+    graphiql: {
+      editorTheme: 'blackboard',
+    },
+  }),
+);
+```
+
+[List of available CodeMirror themas](https://codemirror.net/demo/theme.html)
+
+or an object with `url` and `name` properties where `url` should lead to
+your custom theme and `name` would be passed to the `GraphiQL`
+react element on creation as the `editorTheme` property
+
+```js
+router.all(
+  '/graphql',
+  graphqlHTTP({
+    schema: MyGraphQLSchema,
+    graphiql: {
+      editorTheme: {
+        name: 'blackboard',
+        url: 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.53.2/theme/erlang-dark.css',
+      },
+    },
+  }),
+);
+```
+
+For details see the [GraphiQL spec](https://github.com/graphql/graphiql/tree/master/packages/graphiql#applying-an-editor-theme)
 
 ## Additional Validation Rules
 
@@ -262,14 +335,14 @@ export function DisallowMetadataQueries(context) {
     Field(node) {
       const fieldName = node.name.value;
 
-      if (fieldName === "metadata") {
+      if (fieldName === 'metadata') {
         context.reportError(
           new GraphQLError(
             `Validation: Requesting the field ${fieldName} is not allowed`,
           ),
         );
       }
-    }
+    },
   };
 }
 ```
@@ -284,16 +357,14 @@ formatError: (error, ctx) => ({
   message: error.message,
   locations: error.locations,
   stack: error.stack ? error.stack.split('\n') : [],
-  path: error.path
-})
+  path: error.path,
+});
 ```
-
 
 ### Examples
 
 - [koa-graphql-relay-example](https://github.com/graphql-community/koa-graphql-relay-example)
 - [tests](https://github.com/graphql-community/koa-graphql/blob/main/src/__tests__/http-test.js)
-
 
 ### Other relevant projects
 
@@ -308,7 +379,7 @@ Welcome pull requests!
 BSD-3-Clause
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
-[`formatError`]: https://github.com/graphql/graphql-js/blob/main/src/error/formatError.js
-[GraphiQL]: https://github.com/graphql/graphiql
+[`formaterror`]: https://github.com/graphql/graphql-js/blob/main/src/error/formatError.js
+[graphiql]: https://github.com/graphql/graphiql
 [`multer`]: https://github.com/expressjs/multer
 [`koa-session`]: https://github.com/koajs/session

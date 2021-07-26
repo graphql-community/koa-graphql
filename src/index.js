@@ -1,6 +1,8 @@
 /* @flow strict */
 
 import {
+  ExecutionArgs,
+  ExecutionResult,
   Source,
   validateSchema,
   parse,
@@ -87,7 +89,7 @@ export type OptionsData = {
   /**
    * A boolean to optionally enable GraphiQL mode.
    */
-  graphiql?: ?boolean,
+  graphiql?: ?boolean | {},
 
   /**
    * A resolver function to use when one is not provided by the schema.
@@ -95,6 +97,14 @@ export type OptionsData = {
    * value or method on the source value with the field's name).
    */
   fieldResolver?: ?GraphQLFieldResolver<any, any>,
+
+  /**
+   * An optional function which will be used to execute instead of default `execute`
+   * from `graphql-js`.
+   */
+  customExecuteFn?: (
+    args: ExecutionArgs,
+  ) => Promise<ExecutionResult> | ExecutionResult,
 };
 
 type Middleware = (ctx: Context) => Promise<void>;
@@ -124,6 +134,7 @@ function graphqlHTTP(options: Options): Middleware {
     let graphiql;
     let formatErrorFn;
     let extensionsFn;
+    let executeFn;
     let showGraphiQL;
     let query;
     let documentAST;
@@ -164,6 +175,7 @@ function graphqlHTTP(options: Options): Middleware {
       graphiql = optionsData.graphiql;
       formatErrorFn = optionsData.formatError;
       extensionsFn = optionsData.extensions;
+      executeFn = optionsData.customExecuteFn || execute;
 
       validationRules = specifiedRules;
       if (optionsData.validationRules) {
@@ -251,7 +263,7 @@ function graphqlHTTP(options: Options): Middleware {
         // Perform the execution, reporting any errors creating the context.
         try {
           resolve(
-            execute(
+            executeFn(
               schema,
               documentAST,
               rootValue,
@@ -310,12 +322,17 @@ function graphqlHTTP(options: Options): Middleware {
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      const payload = renderGraphiQL({
-        query,
-        variables,
-        operationName,
-        result,
-      });
+      const payload = renderGraphiQL(
+        Object.assign(
+          {
+            query,
+            variables,
+            operationName,
+            result,
+          },
+          graphiql,
+        ),
+      );
       response.type = 'text/html';
       response.body = payload;
     } else {

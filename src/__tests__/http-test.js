@@ -22,6 +22,7 @@ import {
   GraphQLString,
   GraphQLError,
   BREAK,
+  execute,
 } from 'graphql';
 import graphqlHTTP from '../';
 
@@ -675,8 +676,10 @@ describe('GraphQL-HTTP tests', () => {
         ),
       );
 
-      const response = await request(app.listen()).post(urlString()).send({
-        query: `
+      const response = await request(app.listen())
+        .post(urlString())
+        .send({
+          query: `
             query helloYou { test(who: "You"), ...shared }
             query helloWorld { test(who: "World"), ...shared }
             query helloDolly { test(who: "Dolly"), ...shared }
@@ -684,8 +687,8 @@ describe('GraphQL-HTTP tests', () => {
               shared: test(who: "Everyone")
             }
           `,
-        operationName: 'helloWorld',
-      });
+          operationName: 'helloWorld',
+        });
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
@@ -1225,7 +1228,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
-            message: 'Syntax Error: Unexpected Name "syntaxerror"',
+            message: 'Syntax Error: Unexpected Name "syntaxerror".',
             locations: [{ line: 1, column: 1 }],
           },
         ],
@@ -1476,7 +1479,7 @@ describe('GraphQL-HTTP tests', () => {
           {
             locations: [{ column: 16, line: 1 }],
             message:
-              'Variable "$who" got invalid value ["Dolly", "Jonty"]; Expected type String; String cannot represent a non string value: ["Dolly", "Jonty"]',
+              'Variable "$who" got invalid value ["Dolly", "Jonty"]; String cannot represent a non string value: ["Dolly", "Jonty"]',
           },
         ],
       });
@@ -2014,6 +2017,63 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}',
+      );
+    });
+  });
+
+  describe('Custom execute', () => {
+    it('allow to replace default execute', async () => {
+      const app = server();
+
+      let seenExecuteArgs;
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            async customExecuteFn(...args) {
+              seenExecuteArgs = args;
+              const result = await Promise.resolve(execute(...args));
+              result.data.test2 = 'Modification';
+              return result;
+            },
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World","test2":"Modification"}}',
+      );
+      expect(seenExecuteArgs).to.not.equal(null);
+    });
+
+    it('catches errors thrown from custom execute function', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            customExecuteFn() {
+              throw new Error('I did something wrong');
+            },
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(400);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"I did something wrong"}]}',
       );
     });
   });

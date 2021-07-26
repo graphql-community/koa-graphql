@@ -1,13 +1,12 @@
 # GraphQL Koa Middleware
 
-[![NPM version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Test coverage][coveralls-image]][coveralls-url]
-[![Dependency Status][david_img]][david_site]
+[![npm version](https://badge.fury.io/js/koa-graphql.svg)](https://badge.fury.io/js/koa-graphql)
+[![Build Status](https://github.com/graphql-community/koa-graphql/workflows/CI/badge.svg?branch=main)](https://github.com/graphql-community/koa-graphql/actions?query=branch%3Amain)
+[![Coverage Status](https://codecov.io/gh/graphql-community/koa-graphql/branch/main/graph/badge.svg)](https://codecov.io/gh/graphql-community/koa-graphql)
 
 Create a GraphQL HTTP server with [Koa](http://koajs.com/).
 
-Port from [express-graphql](https://github.com/graphql/express-graphql)
+Port from [express-graphql](https://github.com/graphql/express-graphql).
 
 ## Installation
 
@@ -100,10 +99,10 @@ The `graphqlHTTP` function accepts the following options:
   You may or may not want to turn on GraphiQL in production.
 
 - **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
-  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/master/src/execution/execute.js#L122).
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).
 
 - **`context`**: A value to pass as the `context` to the `graphql()`
-  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/master/src/execution/execute.js#L123). If `context` is not provided, the
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L123). If `context` is not provided, the
   `ctx` object is passed as the context.
 
 - **`pretty`**: If `true`, any JSON response will be pretty-printed.
@@ -157,7 +156,7 @@ If not found in the query-string, it will look in the POST request body.
 If a previous middleware has already parsed the POST body, the `request.body`
 value will be used. Use [`multer`][] or a similar middleware to add support
 for `multipart/form-data` content, which may be useful for GraphQL mutations
-involving uploading files. See an [example using multer](https://github.com/chentsulin/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
+involving uploading files. See an [example using multer](https://github.com/graphql-community/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
 
 If the POST body has not yet been parsed, koa-graphql will interpret it
 depending on the provided _Content-Type_ header.
@@ -326,7 +325,7 @@ For details see the [GraphiQL spec](https://github.com/graphql/graphiql/tree/mas
 
 GraphQL's [validation phase](https://facebook.github.io/graphql/#sec-Validation) checks the query to ensure that it can be successfully executed against the schema. The `validationRules` option allows for additional rules to be run during this phase. Rules are applied to each node in an AST representing the query using the Visitor pattern.
 
-A validation rule is a function which returns a visitor for one or more node Types. Below is an example of a validation preventing the specific fieldname `metadata` from being queried. For more examples see the [`specifiedRules`](https://github.com/graphql/graphql-js/tree/master/src/validation/rules) in the [graphql-js](https://github.com/graphql/graphql-js) package.
+A validation rule is a function which returns a visitor for one or more node Types. Below is an example of a validation preventing the specific fieldname `metadata` from being queried. For more examples see the [`specifiedRules`](https://github.com/graphql/graphql-js/tree/main/src/validation/rules) in the [graphql-js](https://github.com/graphql/graphql-js) package.
 
 ```js
 import { GraphQLError } from 'graphql';
@@ -364,8 +363,8 @@ formatError: (error, ctx) => ({
 
 ### Examples
 
-- [koa-graphql-relay-example](https://github.com/chentsulin/koa-graphql-relay-example)
-- [tests](https://github.com/chentsulin/koa-graphql/blob/master/src/__tests__/http-test.js)
+- [koa-graphql-relay-example](https://github.com/graphql-community/koa-graphql-relay-example)
+- [tests](https://github.com/graphql-community/koa-graphql/blob/main/src/__tests__/http-test.js)
 
 ### Other relevant projects
 
@@ -380,15 +379,7 @@ Welcome pull requests!
 BSD-3-Clause
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
-[`formaterror`]: https://github.com/graphql/graphql-js/blob/master/src/error/formatError.js
+[`formaterror`]: https://github.com/graphql/graphql-js/blob/main/src/error/formatError.js
 [graphiql]: https://github.com/graphql/graphiql
 [`multer`]: https://github.com/expressjs/multer
 [`koa-session`]: https://github.com/koajs/session
-[npm-image]: https://img.shields.io/npm/v/koa-graphql.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/koa-graphql
-[travis-image]: https://travis-ci.org/chentsulin/koa-graphql.svg?branch=master
-[travis-url]: https://travis-ci.org/chentsulin/koa-graphql
-[coveralls-image]: https://coveralls.io/repos/chentsulin/koa-graphql/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/chentsulin/koa-graphql?branch=master
-[david_img]: https://david-dm.org/chentsulin/koa-graphql.svg
-[david_site]: https://david-dm.org/chentsulin/koa-graphql

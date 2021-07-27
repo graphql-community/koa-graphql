@@ -96,6 +96,7 @@
     "prettier": "^2.3.2",
     "raw-body": "^2.4.1",
     "sane": "^4.1.0",
+    "sinon": "^11.1.2",
     "supertest": "^4.0.2"
   },
   "peerDependencies": {

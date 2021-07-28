@@ -63,7 +63,7 @@
     "build:flow": "find ./src -name '*.js' -not -path '*/__tests__*' | while read filepath; do cp $filepath `echo $filepath | sed 's/\\/src\\//\\/dist\\//g'`.flow; done",
     "watch": "node resources/watch.js",
     "preversion": "npm test",
-    "start": "babel-node examples/index.js"
+    "start": "node -r babel-register examples/index.js"
   },
   "dependencies": {
     "babel-runtime": "^6.26.0",

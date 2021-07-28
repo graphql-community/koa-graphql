@@ -135,6 +135,8 @@ The `graphqlHTTP` function accepts the following options:
 
 - **`fieldResolver`**
 
+- **`typeResolver`**
+
 ## HTTP Usage
 
 Once installed at a path, `koa-graphql` will accept requests with

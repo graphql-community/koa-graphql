@@ -21,6 +21,7 @@ import type {
   GraphQLError,
   GraphQLSchema,
   GraphQLFieldResolver,
+  GraphQLTypeResolver,
   ValidationContext,
   ASTVisitor,
 } from 'graphql';
@@ -128,6 +129,13 @@ export type OptionsData = {
    * value or method on the source value with the field's name).
    */
   fieldResolver?: ?GraphQLFieldResolver<any, any>,
+
+  /**
+   * A type resolver function to use when none is provided by the schema.
+   * If not provided, the default type resolver is used (which looks for a
+   * `__typename` field or alternatively calls the `isTypeOf` method).
+   */
+  typeResolver?: ?GraphQLTypeResolver<any, any>,
 };
 
 type Middleware = (ctx: Context) => Promise<void>;
@@ -153,6 +161,7 @@ function graphqlHTTP(options: Options): Middleware {
     let context;
     let rootValue;
     let fieldResolver;
+    let typeResolver;
     let pretty;
     let graphiql;
     let formatErrorFn = formatError;
@@ -196,6 +205,7 @@ function graphqlHTTP(options: Options): Middleware {
       context = optionsData.context || ctx;
       rootValue = optionsData.rootValue;
       fieldResolver = optionsData.fieldResolver;
+      typeResolver = optionsData.typeResolver;
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
       extensionsFn = optionsData.extensions;
@@ -314,6 +324,7 @@ function graphqlHTTP(options: Options): Middleware {
               variableValues: variables,
               operationName,
               fieldResolver,
+              typeResolver,
             }),
           );
           response.status = 200;

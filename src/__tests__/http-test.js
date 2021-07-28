@@ -13,7 +13,7 @@ import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
 import session from 'koa-session';
-import parse from 'co-body';
+import parseBody from 'co-body';
 import getRawBody from 'raw-body';
 
 import {
@@ -23,8 +23,10 @@ import {
   GraphQLString,
   GraphQLError,
   BREAK,
+  Source,
   validate,
   execute,
+  parse,
 } from 'graphql';
 import graphqlHTTP from '../';
 
@@ -876,7 +878,7 @@ describe('GraphQL-HTTP tests', () => {
       const app = server();
       app.use(async function (ctx, next) {
         if (ctx.is('application/graphql')) {
-          ctx.request.body = await parse.text(ctx);
+          ctx.request.body = await parseBody.text(ctx);
         }
         await next();
       });
@@ -900,7 +902,7 @@ describe('GraphQL-HTTP tests', () => {
       const app = server();
       app.use(async function (ctx, next) {
         if (ctx.is('*/*')) {
-          ctx.request.body = await parse.text(ctx);
+          ctx.request.body = await parseBody.text(ctx);
         }
         await next();
       });
@@ -1994,6 +1996,121 @@ describe('GraphQL-HTTP tests', () => {
     });
   });
 
+  describe('Custom execute', () => {
+    it('allow to replace default execute', async () => {
+      const app = server();
+
+      let seenExecuteArgs;
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            async customExecuteFn(...args) {
+              seenExecuteArgs = args;
+              const result = await Promise.resolve(execute(...args));
+              result.data.test2 = 'Modification';
+              return result;
+            },
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.text).to.equal(
+        '{"data":{"test":"Hello World","test2":"Modification"}}',
+      );
+      expect(seenExecuteArgs).to.not.equal(null);
+    });
+
+    it('catches errors thrown from custom execute function', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            customExecuteFn() {
+              throw new Error('I did something wrong');
+            },
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(400);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"I did something wrong"}]}',
+      );
+    });
+  });
+
+  describe('Custom parse function', () => {
+    it('can replace default parse functionality', async () => {
+      const app = server();
+
+      let seenParseArgs;
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => {
+            return {
+              schema: TestSchema,
+              customParseFn(args) {
+                seenParseArgs = args;
+                return parse(new Source('{test}', 'Custom parse function'));
+              },
+            };
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({ query: '----' }),
+      );
+
+      expect(response.status).to.equal(200);
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
+      expect(seenParseArgs).property('body', '----');
+    });
+
+    it('can throw errors', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => {
+            return {
+              schema: TestSchema,
+              customParseFn() {
+                throw new GraphQLError('my custom parse error');
+              },
+            };
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({ query: '----' }),
+      );
+
+      expect(response.status).to.equal(400);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"my custom parse error"}]}',
+      );
+    });
+  });
+
   describe('Custom result extensions', () => {
     it('allows for adding extensions', async () => {
       const app = server();
@@ -2093,63 +2210,6 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}',
-      );
-    });
-  });
-
-  describe('Custom execute', () => {
-    it('allow to replace default execute', async () => {
-      const app = server();
-
-      let seenExecuteArgs;
-
-      app.use(
-        mount(
-          urlString(),
-          graphqlHTTP(() => ({
-            schema: TestSchema,
-            async customExecuteFn(...args) {
-              seenExecuteArgs = args;
-              const result = await Promise.resolve(execute(...args));
-              result.data.test2 = 'Modification';
-              return result;
-            },
-          })),
-        ),
-      );
-
-      const response = await request(app.listen())
-        .get(urlString({ query: '{test}', raw: '' }))
-        .set('Accept', 'text/html');
-
-      expect(response.text).to.equal(
-        '{"data":{"test":"Hello World","test2":"Modification"}}',
-      );
-      expect(seenExecuteArgs).to.not.equal(null);
-    });
-
-    it('catches errors thrown from custom execute function', async () => {
-      const app = server();
-
-      app.use(
-        mount(
-          urlString(),
-          graphqlHTTP(() => ({
-            schema: TestSchema,
-            customExecuteFn() {
-              throw new Error('I did something wrong');
-            },
-          })),
-        ),
-      );
-
-      const response = await request(app.listen())
-        .get(urlString({ query: '{test}', raw: '' }))
-        .set('Accept', 'text/html');
-
-      expect(response.status).to.equal(400);
-      expect(response.text).to.equal(
-        '{"errors":[{"message":"I did something wrong"}]}',
       );
     });
   });

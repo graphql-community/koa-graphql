@@ -37,36 +37,15 @@ const QueryRootType = new GraphQLObjectType({
     test: {
       type: GraphQLString,
       args: {
-        who: {
-          type: GraphQLString,
-        },
+        who: { type: GraphQLString },
       },
       resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World'),
-    },
-    nonNullThrower: {
-      type: new GraphQLNonNull(GraphQLString),
-      resolve: () => {
-        throw new Error('Throws!');
-      },
     },
     thrower: {
       type: GraphQLString,
       resolve: () => {
         throw new Error('Throws!');
       },
-    },
-    context: {
-      type: GraphQLString,
-      resolve: (obj, args, context) => context,
-    },
-    contextDotFoo: {
-      type: GraphQLString,
-      resolve: (obj, args, context) => {
-        return (context: any).foo;
-      },
-    },
-    missingResolver: {
-      type: GraphQLString,
     },
   },
 });
@@ -303,13 +282,24 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Allows passing in a context', async () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            test: {
+              type: GraphQLString,
+              resolve: (obj, args, context) => context,
+            },
+          },
+        }),
+      });
       const app = server();
 
       app.use(
         mount(
           urlString(),
           graphqlHTTP({
-            schema: TestSchema,
+            schema,
             context: 'testValue',
           }),
         ),
@@ -317,50 +307,46 @@ describe('GraphQL-HTTP tests', () => {
 
       const response = await request(app.listen()).get(
         urlString({
-          operationName: 'TestQuery',
-          query: `
-            query TestQuery { context }
-          `,
+          query: '{ test }',
         }),
       );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          context: 'testValue',
+          test: 'testValue',
         },
       });
     });
 
     it('Allows passing in a fieldResolver', async () => {
+      const schema = buildSchema(`
+        type Query {
+          test: String
+        }
+      `);
       const app = server();
 
       app.use(
         mount(
           urlString(),
           graphqlHTTP({
-            schema: TestSchema,
-            context: 'testValue',
-            fieldResolver() {
-              return 'fieldResolver data';
-            },
+            schema,
+            fieldResolver: () => 'fieldResolver data',
           }),
         ),
       );
 
       const response = await request(app.listen()).get(
         urlString({
-          operationName: 'TestQuery',
-          query: `
-            query TestQuery { missingResolver }
-          `,
+          query: '{ test }',
         }),
       );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          missingResolver: 'fieldResolver data',
+          test: 'fieldResolver data',
         },
       });
     });
@@ -406,6 +392,17 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('Uses ctx as context by default', async () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            test: {
+              type: GraphQLString,
+              resolve: (obj, args, context) => (context: any).foo,
+            },
+          },
+        }),
+      });
       const app = server();
 
       // Middleware that adds ctx.foo to every request
@@ -418,24 +415,21 @@ describe('GraphQL-HTTP tests', () => {
         mount(
           urlString(),
           graphqlHTTP({
-            schema: TestSchema,
+            schema,
           }),
         ),
       );
 
       const response = await request(app.listen()).get(
         urlString({
-          operationName: 'TestQuery',
-          query: `
-            query TestQuery { contextDotFoo }
-          `,
+          query: '{ test }',
         }),
       );
 
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
-          contextDotFoo: 'bar',
+          test: 'bar',
         },
       });
     });
@@ -1124,20 +1118,33 @@ describe('GraphQL-HTTP tests', () => {
     });
 
     it('handles query errors from non-null top field errors', async () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            test: {
+              type: new GraphQLNonNull(GraphQLString),
+              resolve() {
+                throw new Error('Throws!');
+              },
+            },
+          },
+        }),
+      });
       const app = server();
 
       app.use(
         mount(
           urlString(),
           graphqlHTTP({
-            schema: TestSchema,
+            schema,
           }),
         ),
       );
 
       const response = await request(app.listen()).get(
         urlString({
-          query: '{nonNullThrower}',
+          query: '{ test }',
         }),
       );
 
@@ -1147,8 +1154,8 @@ describe('GraphQL-HTTP tests', () => {
         errors: [
           {
             message: 'Throws!',
-            locations: [{ line: 1, column: 2 }],
-            path: ['nonNullThrower'],
+            locations: [{ line: 1, column: 3 }],
+            path: ['test'],
           },
         ],
       });

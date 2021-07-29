@@ -96,11 +96,12 @@ The `graphqlHTTP` function accepts the following options:
   app is in development, because it's quite useful. You may or may not want it
   in production.
   Alternatively, instead of `true` you can pass in an options object:
-    * **`defaultQuery`**: An optional GraphQL string to use when no query
-      is provided and no stored query exists from a previous session.
-      If undefined is provided, GraphiQL will use its own default query.
-    * **`editorTheme`**: By passing an object you may change the theme of GraphiQL. 
-      Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
+
+  - **`defaultQuery`**: An optional GraphQL string to use when no query
+    is provided and no stored query exists from a previous session.
+    If undefined is provided, GraphiQL will use its own default query.
+  - **`editorTheme`**: By passing an object you may change the theme of GraphiQL.
+    Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
 
 - **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
   function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).

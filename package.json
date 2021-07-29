@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "description": "Production ready GraphQL Koa middleware.",
   "contributors": [
-    "Lee Byron <lee@leebyron.com> (http://leebyron.com/)",
+    "Lee Byron <lee@leebyron.com> (https://leebyron.com/)",
     "Daniel Schafer <dschafer@fb.com>",
     "C.T. Lin <chentsulin@gmail.com>"
   ],
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/graphql-community/koa-graphql.git"
+    "url": "https://github.com/graphql-community/koa-graphql.git"
   },
   "keywords": [
     "koa",

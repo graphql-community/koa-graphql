@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/graphql-community/koa-graphql/workflows/CI/badge.svg?branch=main)](https://github.com/graphql-community/koa-graphql/actions?query=branch%3Amain)
 [![Coverage Status](https://codecov.io/gh/graphql-community/koa-graphql/branch/main/graph/badge.svg)](https://codecov.io/gh/graphql-community/koa-graphql)
 
-Create a GraphQL HTTP server with [Koa](http://koajs.com/).
+Create a GraphQL HTTP server with [Koa](https://koajs.com/).
 
 Port from [express-graphql](https://github.com/graphql/express-graphql).
 

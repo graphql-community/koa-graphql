@@ -91,12 +91,16 @@ The `graphqlHTTP` function accepts the following options:
 - **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
   A `schema` _must_ be provided.
 
-- **`graphiql`**: If `true` or `object`, presents [GraphiQL][] when the route with a
-  `/graphiql` appended is loaded in a browser. We recommend that you set
-  `graphiql` to `true` when your app is in development, because it's
-  quite useful. By passing an object you may change the theme of GraphiQL.
-  Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
-  You may or may not want to turn on GraphiQL in production.
+- **`graphiql`**: If `true`, presents [GraphiQL][] when the GraphQL endpoint is
+  loaded in a browser. We recommend that you set `graphiql` to `true` when your
+  app is in development, because it's quite useful. You may or may not want it
+  in production.
+  Alternatively, instead of `true` you can pass in an options object:
+    * **`defaultQuery`**: An optional GraphQL string to use when no query
+      is provided and no stored query exists from a previous session.
+      If undefined is provided, GraphiQL will use its own default query.
+    * **`editorTheme`**: By passing an object you may change the theme of GraphiQL. 
+      Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
 
 - **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
   function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).

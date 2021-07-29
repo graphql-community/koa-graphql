@@ -13,7 +13,7 @@ import {
 import expressGraphQL from 'express-graphql';
 import httpError from 'http-errors';
 
-import { renderGraphiQL } from './renderGraphiQL';
+import { renderGraphiQL, type GraphiQLOptions } from './renderGraphiQL';
 
 import type {
   ExecutionArgs,
@@ -120,8 +120,9 @@ export type OptionsData = {
 
   /**
    * A boolean to optionally enable GraphiQL mode.
+   * Alternatively, instead of `true` you can pass in an options object.
    */
-  graphiql?: ?boolean | {},
+  graphiql?: ?boolean | ?GraphiQLOptions,
 
   /**
    * A resolver function to use when one is not provided by the schema.
@@ -169,7 +170,7 @@ function graphqlHTTP(options: Options): Middleware {
     let executeFn = execute;
     let parseFn = parse;
     let extensionsFn;
-    let showGraphiQL;
+    let showGraphiQL = false;
     let query;
     let documentAST;
     let variables;
@@ -242,7 +243,7 @@ function graphqlHTTP(options: Options): Middleware {
       query = params.query;
       variables = params.variables;
       operationName = params.operationName;
-      showGraphiQL = graphiql && canDisplayGraphiQL(request, params);
+      showGraphiQL = canDisplayGraphiQL(request, params) && graphiql;
 
       result = await new Promise((resolve) => {
         // If there is no query, but GraphiQL will be displayed, do not produce
@@ -371,17 +372,13 @@ function graphqlHTTP(options: Options): Middleware {
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
-      const payload = renderGraphiQL(
-        Object.assign(
-          {
-            query,
-            variables,
-            operationName,
-            result,
-          },
-          graphiql,
-        ),
-      );
+      const payload = renderGraphiQL({
+        query,
+        variables,
+        operationName,
+        result,
+        options: typeof showGraphiQL !== 'boolean' ? showGraphiQL : {},
+      });
       response.type = 'text/html';
       response.body = payload;
     } else {

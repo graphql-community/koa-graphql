@@ -81,7 +81,6 @@
     "raw-body": "^2.4.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "sane": "^4.1.0",
     "sinon": "^11.1.2",
     "supertest": "^4.0.2",
     "unfetch": "^4.2.0"

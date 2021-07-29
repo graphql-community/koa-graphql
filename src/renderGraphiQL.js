@@ -119,7 +119,7 @@ add "&raw" to the end of the URL within a browser.
     }
   </style>
   <style>
-    // graphiql/graphiql.css
+    /* graphiql/graphiql.css */
     ${loadFileStaticlyFromNPM('graphiql/graphiql.css')}
   </style>
   ${editorTheme.link || ''}

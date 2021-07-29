@@ -2163,23 +2163,16 @@ describe('GraphQL-HTTP tests', () => {
     it('allows for adding extensions', async () => {
       const app = server();
 
-      const extensions = ({ context = {} }) => {
-        if (context !== null && typeof context.startTime === 'number') {
-          return {
-            runTime: 1000000010 /* Date.now() */ - context.startTime,
-          };
-        }
-        return {};
-      };
-
       app.use(
         mount(
           urlString(),
           graphqlHTTP(() => {
             return {
               schema: TestSchema,
-              context: { startTime: 1000000000 },
-              extensions,
+              context: { foo: 'bar' },
+              extensions({ context }) {
+                return { contextValue: JSON.stringify(context) };
+              },
             };
           }),
         ),
@@ -2192,7 +2185,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.status).to.equal(200);
       expect(response.type).to.equal('application/json');
       expect(response.text).to.equal(
-        '{"data":{"test":"Hello World"},"extensions":{"runTime":10}}',
+        '{"data":{"test":"Hello World"},"extensions":{"contextValue":"{\\"foo\\":\\"bar\\"}"}}',
       );
     });
 

@@ -22,8 +22,6 @@ type EditorTheme =
     }
   | {};
 
-// Current latest version of GraphiQL.
-const GRAPHIQL_VERSION = '0.17.5';
 // Current latest version of codeMirror.
 const CODE_MIRROR_VERSION = '5.53.2';
 
@@ -31,6 +29,9 @@ const CODE_MIRROR_VERSION = '5.53.2';
 function safeSerialize(data): string {
   return data ? JSON.stringify(data).replace(/\//g, '\\/') : 'undefined';
 }
+
+// Implemented as Babel transformation, see ../resources/load-staticly-from-npm.js
+declare function loadFileStaticlyFromNPM(npmPath: string): string;
 
 function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
   if (!editorTheme) {
@@ -102,13 +103,31 @@ add "&raw" to the end of the URL within a browser.
       height: 100vh;
     }
   </style>
-  <link href="//cdn.jsdelivr.net/npm/graphiql@${GRAPHIQL_VERSION}/graphiql.css" rel="stylesheet" />
+  <style>
+    // graphiql/graphiql.css
+    ${loadFileStaticlyFromNPM('graphiql/graphiql.css')}
+  </style>
   ${editorTheme.link || ''}
-  <script src="//cdn.jsdelivr.net/es6-promise/4.0.5/es6-promise.auto.min.js"></script>
-  <script src="//cdn.jsdelivr.net/fetch/0.9.0/fetch.min.js"></script>
-  <script src="//cdn.jsdelivr.net/react/15.4.2/react.min.js"></script>
-  <script src="//cdn.jsdelivr.net/react/15.4.2/react-dom.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/graphiql@${GRAPHIQL_VERSION}/graphiql.min.js"></script>
+  <script>
+    // promise-polyfill/dist/polyfill.min.js
+    ${loadFileStaticlyFromNPM('promise-polyfill/dist/polyfill.min.js')}
+  </script>
+  <script>
+    // unfetch/dist/unfetch.umd.js
+    ${loadFileStaticlyFromNPM('unfetch/dist/unfetch.umd.js')}
+  </script>
+  <script>
+    // react/umd/react.production.min.js
+    ${loadFileStaticlyFromNPM('react/umd/react.production.min.js')}
+  </script>
+  <script>
+    // react-dom/umd/react-dom.production.min.js
+    ${loadFileStaticlyFromNPM('react-dom/umd/react-dom.production.min.js')}
+  </script>
+  <script>
+    // graphiql/graphiql.min.js
+    ${loadFileStaticlyFromNPM('graphiql/graphiql.min.js')}
+  </script>
 </head>
 <body>
   <div id="graphiql">Loading...</div>

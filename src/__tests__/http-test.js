@@ -1014,12 +1014,10 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP((req) => {
-            return {
-              schema: TestSchema,
-              pretty: req.query.pretty === '1',
-            };
-          }),
+          graphqlHTTP((req) => ({
+            schema: TestSchema,
+            pretty: req.query.pretty === '1',
+          })),
         ),
       );
 
@@ -2134,15 +2132,13 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP(() => {
-            return {
-              schema: TestSchema,
-              customParseFn(args) {
-                seenParseArgs = args;
-                return parse(new Source('{test}', 'Custom parse function'));
-              },
-            };
-          }),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            customParseFn(args) {
+              seenParseArgs = args;
+              return parse(new Source('{test}', 'Custom parse function'));
+            },
+          })),
         ),
       );
 
@@ -2161,14 +2157,12 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP(() => {
-            return {
-              schema: TestSchema,
-              customParseFn() {
-                throw new GraphQLError('my custom parse error');
-              },
-            };
-          }),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            customParseFn() {
+              throw new GraphQLError('my custom parse error');
+            },
+          })),
         ),
       );
 
@@ -2190,15 +2184,13 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP(() => {
-            return {
-              schema: TestSchema,
-              context: { foo: 'bar' },
-              extensions({ context }) {
-                return { contextValue: JSON.stringify(context) };
-              },
-            };
-          }),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            context: { foo: 'bar' },
+            extensions({ context }) {
+              return { contextValue: JSON.stringify(context) };
+            },
+          })),
         ),
       );
 

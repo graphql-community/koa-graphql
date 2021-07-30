@@ -762,7 +762,7 @@ describe('GraphQL-HTTP tests', () => {
       const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql; charset=utf-16');
-      req.write(new Buffer('{ test(who: "World") }', 'utf16le'));
+      req.write(Buffer.from('{ test(who: "World") }', 'utf16le'));
       const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
@@ -923,7 +923,7 @@ describe('GraphQL-HTTP tests', () => {
       const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql');
-      req.write(new Buffer('{ test(who: "World") }'));
+      req.write(Buffer.from('{ test(who: "World") }'));
       const response = await req;
 
       expect(JSON.parse(response.text)).to.deep.equal({
@@ -945,7 +945,7 @@ describe('GraphQL-HTTP tests', () => {
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
 
       const req = request(app.listen()).post(urlString());
-      req.write(new Buffer('{ test(who: "World") }'));
+      req.write(Buffer.from('{ test(who: "World") }'));
       const response = await req;
 
       expect(response.status).to.equal(400);
@@ -973,7 +973,7 @@ describe('GraphQL-HTTP tests', () => {
       const req = request(app.listen())
         .post(urlString())
         .set('Content-Type', 'application/graphql');
-      req.write(new Buffer('{ test(who: "World") }'));
+      req.write(Buffer.from('{ test(who: "World") }'));
       const response = await req;
 
       expect(response.status).to.equal(400);

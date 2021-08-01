@@ -41,7 +41,9 @@ const CODE_MIRROR_VERSION = '5.53.2';
 
 // Ensures string values are safe to be used within a <script> tag.
 function safeSerialize(data): string {
-  return data ? JSON.stringify(data).replace(/\//g, '\\/') : 'undefined';
+  return data != null
+    ? JSON.stringify(data).replace(/\//g, '\\/')
+    : 'undefined';
 }
 
 // Implemented as Babel transformation, see ../resources/load-staticly-from-npm.js
@@ -84,12 +86,10 @@ function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
  */
 export function renderGraphiQL(data: GraphiQLData): string {
   const queryString = data.query;
-  const variablesString = data.variables
-    ? JSON.stringify(data.variables, null, 2)
-    : null;
-  const resultString = data.result
-    ? JSON.stringify(data.result, null, 2)
-    : null;
+  const variablesString =
+    data.variables != null ? JSON.stringify(data.variables, null, 2) : null;
+  const resultString =
+    data.result != null ? JSON.stringify(data.result, null, 2) : null;
   const operationName = data.operationName;
   const defaultQuery = data.options.defaultQuery;
   const editorTheme = getEditorThemeParams(data.options.editorTheme);

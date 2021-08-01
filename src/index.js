@@ -202,11 +202,11 @@ function graphqlHTTP(options: Options): Middleware {
 
       // Collect information from the options data object.
       schema = optionsData.schema;
-      context = optionsData.context || ctx;
+      context = optionsData.context ?? ctx;
       rootValue = optionsData.rootValue;
       fieldResolver = optionsData.fieldResolver;
       typeResolver = optionsData.typeResolver;
-      validationRules = optionsData.validationRules || [];
+      validationRules = optionsData.validationRules ?? [];
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
       extensionsFn = optionsData.extensions;
@@ -218,12 +218,12 @@ function graphqlHTTP(options: Options): Middleware {
         );
       }
 
-      validateFn = optionsData.customValidateFn || validateFn;
-      executeFn = optionsData.customExecuteFn || executeFn;
-      parseFn = optionsData.customParseFn || parseFn;
+      validateFn = optionsData.customValidateFn ?? validateFn;
+      executeFn = optionsData.customExecuteFn ?? executeFn;
+      parseFn = optionsData.customParseFn ?? parseFn;
       formatErrorFn =
-        optionsData.customFormatErrorFn ||
-        optionsData.formatError ||
+        optionsData.customFormatErrorFn ??
+        optionsData.formatError ??
         formatErrorFn;
 
       // GraphQL HTTP only supports GET and POST methods.
@@ -247,7 +247,7 @@ function graphqlHTTP(options: Options): Middleware {
       result = await new Promise((resolve) => {
         // If there is no query, but GraphiQL will be displayed, do not produce
         // a result, otherwise return a 400: Bad Request.
-        if (!query) {
+        if (query == null) {
           if (showGraphiQL) {
             return resolve(null);
           }
@@ -349,7 +349,7 @@ function graphqlHTTP(options: Options): Middleware {
       }
     } catch (error) {
       // If an error was caught, report the httpError status, or 500.
-      response.status = error.status || 500;
+      response.status = error.status ?? 500;
       result = { errors: [error] };
     }
 

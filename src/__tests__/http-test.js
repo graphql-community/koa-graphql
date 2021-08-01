@@ -39,7 +39,7 @@ const QueryRootType = new GraphQLObjectType({
       args: {
         who: { type: GraphQLString },
       },
-      resolve: (root, { who }) => 'Hello ' + ((who: any) || 'World'),
+      resolve: (root, args) => 'Hello ' + (args.who ?? 'World'),
     },
     thrower: {
       type: GraphQLString,
@@ -398,7 +398,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             test: {
               type: GraphQLString,
-              resolve: (obj, args, context) => (context: any).foo,
+              resolve: (obj, args, context) => context.foo,
             },
           },
         }),
@@ -1010,17 +1010,19 @@ describe('GraphQL-HTTP tests', () => {
 
     it('supports pretty printing configured by request', async () => {
       const app = server();
+      let pretty;
 
       app.use(
         mount(
           urlString(),
-          graphqlHTTP((req) => ({
+          graphqlHTTP(() => ({
             schema: TestSchema,
-            pretty: req.query.pretty === '1',
+            pretty,
           })),
         ),
       );
 
+      pretty = undefined;
       const defaultResponse = await request(app.listen()).get(
         urlString({
           query: '{test}',
@@ -1029,6 +1031,7 @@ describe('GraphQL-HTTP tests', () => {
 
       expect(defaultResponse.text).to.equal('{"data":{"test":"Hello World"}}');
 
+      pretty = true;
       const prettyResponse = await request(app.listen()).get(
         urlString({
           query: '{test}',
@@ -1040,6 +1043,7 @@ describe('GraphQL-HTTP tests', () => {
         '{\n' + '  "data": {\n' + '    "test": "Hello World"\n' + '  }\n' + '}',
       );
 
+      pretty = false;
       const unprettyResponse = await request(app.listen()).get(
         urlString({
           query: '{test}',
@@ -2077,11 +2081,17 @@ describe('GraphQL-HTTP tests', () => {
           urlString(),
           graphqlHTTP(() => ({
             schema: TestSchema,
-            async customExecuteFn(...args) {
+            async customExecuteFn(args) {
               seenExecuteArgs = args;
-              const result = await Promise.resolve(execute(...args));
+              const result = await Promise.resolve(execute(args));
               result.data.test2 = 'Modification';
-              return result;
+              return {
+                ...result,
+                data: {
+                  ...result.data,
+                  test2: 'Modification',
+                },
+              };
             },
           })),
         ),
@@ -2215,7 +2225,7 @@ describe('GraphQL-HTTP tests', () => {
             schema: TestSchema,
             customFormatErrorFn: () => null,
             extensions({ result }) {
-              return { preservedErrors: (result: any).errors };
+              return { preservedResult: { ...result } };
             },
           }),
         ),
@@ -2232,13 +2242,16 @@ describe('GraphQL-HTTP tests', () => {
         data: { thrower: null },
         errors: [null],
         extensions: {
-          preservedErrors: [
-            {
-              message: 'Throws!',
-              locations: [{ line: 1, column: 2 }],
-              path: ['thrower'],
-            },
-          ],
+          preservedResult: {
+            data: { thrower: null },
+            errors: [
+              {
+                message: 'Throws!',
+                locations: [{ line: 1, column: 2 }],
+                path: ['thrower'],
+              },
+            ],
+          },
         },
       });
     });

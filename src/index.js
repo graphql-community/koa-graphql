@@ -392,8 +392,7 @@ function graphqlHTTP(options: Options): Middleware {
  * Helper function to determine if GraphiQL can be displayed.
  */
 function canDisplayGraphiQL(request: Request, params: GraphQLParams): boolean {
-  // If `raw` exists, GraphiQL mode is not enabled.
-  // Allowed to show GraphiQL if not requested as raw and this request
-  // prefers HTML over JSON.
+  // If `raw` false, GraphiQL mode is not enabled.
+  // Allowed to show GraphiQL if not requested as raw and this request prefers HTML over JSON.
   return !params.raw && request.accepts(['json', 'html']) === 'html';
 }

@@ -281,6 +281,34 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('Allows async resolvers', async () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            foo: {
+              type: GraphQLString,
+              resolve: () => Promise.resolve('bar'),
+            },
+          },
+        }),
+      });
+      const app = server();
+
+      app.use(mount(urlString(), graphqlHTTP({ schema })));
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{ foo }',
+        }),
+      );
+
+      expect(response.status).to.equal(200);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        data: { foo: 'bar' },
+      });
+    });
+
     it('Allows passing in a context', async () => {
       const schema = new GraphQLSchema({
         query: new GraphQLObjectType({

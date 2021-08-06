@@ -1,4 +1,5 @@
 /* @flow strict */
+import { type ExecutionResult } from 'graphql';
 
 type EditorThemeParam =
   | {
@@ -11,8 +12,8 @@ type GraphiQLData = {|
   query: ?string,
   variables: ?{ [param: string]: mixed },
   operationName: ?string,
-  result?: mixed,
-  options: GraphiQLOptions,
+  result?: ?ExecutionResult,
+  options: ?GraphiQLOptions,
 |};
 
 export type GraphiQLOptions = {|
@@ -91,7 +92,7 @@ export function renderGraphiQL(data: GraphiQLData): string {
   const resultString =
     data.result != null ? JSON.stringify(data.result, null, 2) : null;
   const operationName = data.operationName;
-  const defaultQuery = data.options.defaultQuery;
+  const defaultQuery = data.options?.defaultQuery;
   const editorTheme = getEditorThemeParams(data.options.editorTheme);
 
   return `<!--

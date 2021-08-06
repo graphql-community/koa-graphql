@@ -297,6 +297,53 @@ for example:
 }
 ```
 
+## Additional Validation Rules
+
+GraphQL's [validation phase](https://graphql.github.io/graphql-spec/#sec-Validation) checks the query to ensure that it can be successfully executed against the schema. The `validationRules` option allows for additional rules to be run during this phase. Rules are applied to each node in an AST representing the query using the Visitor pattern.
+
+A validation rule is a function which returns a visitor for one or more node Types. Below is an example of a validation preventing the specific field name `metadata` from being queried. For more examples, see the [`specifiedRules`](https://github.com/graphql/graphql-js/tree/main/src/validation/rules) in the [graphql-js](https://github.com/graphql/graphql-js) package.
+
+```js
+import { GraphQLError } from 'graphql';
+
+export function DisallowMetadataQueries(context) {
+  return {
+    Field(node) {
+      const fieldName = node.name.value;
+
+      if (fieldName === 'metadata') {
+        context.reportError(
+          new GraphQLError(
+            `Validation: Requesting the field ${fieldName} is not allowed`,
+          ),
+        );
+      }
+    },
+  };
+}
+```
+
+### Disabling introspection
+
+Disabling introspection does not reflect best practices and does not necessarily make your
+application any more secure. Nevertheless, disabling introspection is possible by utilizing the
+`NoSchemaIntrospectionCustomRule` provided by the [graphql-js](https://github.com/graphql/graphql-js)
+package.
+
+```js
+import { NoSchemaIntrospectionCustomRule } from 'graphql';
+
+app.use(
+  '/graphql',
+  graphqlHTTP((request) => {
+    return {
+      schema: MyGraphQLSchema,
+      validationRules: [NoSchemaIntrospectionCustomRule],
+    };
+  }),
+);
+```
+
 ## Custom GraphiQL themes
 
 To use custom GraphiQL theme you should pass to `graphiql` option an object with

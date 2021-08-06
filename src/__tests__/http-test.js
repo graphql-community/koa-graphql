@@ -1086,23 +1086,17 @@ describe('GraphQL-HTTP tests', () => {
   it('will send request, response and context when using thunk', async () => {
     const app = server();
 
-    let hasRequest = false;
-    let hasResponse = false;
-    let hasContext = false;
+    let seenRequest;
+    let seenResponse;
+    let seenContext;
 
     app.use(
       mount(
         urlString(),
         graphqlHTTP((reqest, response, context) => {
-          if (request) {
-            hasRequest = true;
-          }
-          if (response) {
-            hasResponse = true;
-          }
-          if (context) {
-            hasContext = true;
-          }
+          seenRequest = reqest;
+          seenResponse = response;
+          seenContext = context;
           return { schema: TestSchema };
         }),
       ),
@@ -1110,9 +1104,9 @@ describe('GraphQL-HTTP tests', () => {
 
     await request(app.listen()).get(urlString({ query: '{test}' }));
 
-    expect(hasRequest).to.equal(true);
-    expect(hasResponse).to.equal(true);
-    expect(hasContext).to.equal(true);
+    expect(seenRequest).to.not.equal(undefined);
+    expect(seenResponse).to.not.equal(undefined);
+    expect(seenContext).to.not.equal(undefined);
   });
 
   describe('Error handling functionality', () => {

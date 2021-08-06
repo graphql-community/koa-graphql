@@ -1,7 +1,7 @@
 {
   "parser": "babel-eslint",
 
-  "plugins": ["flowtype", "prettier"],
+  "plugins": ["internal-rules", "flowtype", "prettier", "node"],
 
   "env": {
     "es6": true,
@@ -36,7 +36,11 @@
   },
 
   "rules": {
+    "internal-rules/no-dir-import": 2,
+
     "prettier/prettier": 2,
+
+    "node/no-sync": 0,
 
     "flowtype/space-after-type-colon": [2, "always"],
     "flowtype/space-before-type-colon": [2, "never"],
@@ -165,7 +169,7 @@
     "no-shadow-restricted-names": 2,
     "no-spaced-func": 2,
     "no-sparse-arrays": 2,
-    "no-sync": 2,
+    "no-sync": 0,
     "no-ternary": 0,
     "no-this-before-super": 2,
     "no-throw-literal": 2,
@@ -219,5 +223,13 @@
   "globals": {
     "Generator": true,
     "http$IncomingMessage": true
-  }
+  },
+  "overrides": [
+    {
+      "files": "examples/**",
+      "rules": {
+        "internal-rules/no-dir-import": 0
+      }
+    }
+  ]
 }

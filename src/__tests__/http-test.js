@@ -29,7 +29,7 @@ import {
   execute,
   parse,
 } from 'graphql';
-import graphqlHTTP from '../';
+import graphqlHTTP from '../index';
 
 const QueryRootType = new GraphQLObjectType({
   name: 'QueryRoot',

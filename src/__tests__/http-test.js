@@ -908,7 +908,7 @@ describe('GraphQL-HTTP tests', () => {
         mount(
           urlString(),
           graphqlHTTP((req, ctx) => {
-            expect(ctx.req.file.originalname).to.equal('http-test.js');
+            expect(ctx.req.file.originalname).to.equal('test.txt');
             return {
               schema: TestMutationSchema,
               rootValue: { request: ctx.req },
@@ -925,13 +925,13 @@ describe('GraphQL-HTTP tests', () => {
           uploadFile { originalname, mimetype }
         }`,
         )
-        .attach('file', __filename);
+        .attach('file', Buffer.from('test'), 'test.txt');
 
       expect(JSON.parse(response.text)).to.deep.equal({
         data: {
           uploadFile: {
-            originalname: 'http-test.js',
-            mimetype: 'application/javascript',
+            originalname: 'test.txt',
+            mimetype: 'text/plain',
           },
         },
       });

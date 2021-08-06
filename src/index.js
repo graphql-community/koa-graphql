@@ -116,7 +116,9 @@ export type OptionsData = {
    *
    * This function may be async.
    */
-  extensions?: ?(info: RequestInfo) => { [key: string]: mixed },
+  extensions?: (
+    info: RequestInfo,
+  ) => { [key: string]: mixed, ... } | Promise<{ [key: string]: mixed, ... }>,
 
   /**
    * A boolean to optionally enable GraphiQL mode.

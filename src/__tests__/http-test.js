@@ -16,19 +16,18 @@ import parseBody from 'co-body';
 import getRawBody from 'raw-body';
 
 import {
-  buildSchema,
+  type ASTVisitor,
+  type ValidationContext,
   GraphQLSchema,
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
   GraphQLError,
-  ValidationContext,
-  BREAK,
   Source,
   validate,
   execute,
   parse,
-  type ASTVisitor,
+  buildSchema,
 } from 'graphql';
 
 import graphqlHTTP from '../index';
@@ -2045,9 +2044,7 @@ describe('GraphQL-HTTP tests', () => {
             customValidateFn(schema, documentAST, validationRules) {
               const errors = validate(schema, documentAST, validationRules);
 
-              const error = new GraphQLError(`custom error ${errors.length}`);
-
-              return [error];
+              return [new GraphQLError(`custom error ${errors.length}`)];
             },
           }),
         ),
@@ -2075,11 +2072,10 @@ describe('GraphQL-HTTP tests', () => {
       context: ValidationContext,
     ): ASTVisitor {
       return {
-        enter() {
+        Document() {
           context.reportError(
             new GraphQLError('AlwaysInvalidRule was really invalid!'),
           );
-          return BREAK;
         },
       };
     };

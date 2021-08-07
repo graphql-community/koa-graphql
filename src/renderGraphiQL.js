@@ -41,7 +41,7 @@ type EditorTheme =
 const CODE_MIRROR_VERSION = '5.53.2';
 
 // Ensures string values are safe to be used within a <script> tag.
-function safeSerialize(data): string {
+function safeSerialize(data: ?string): string {
   return data != null
     ? JSON.stringify(data).replace(/\//g, '\\/')
     : 'undefined';

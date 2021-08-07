@@ -1,7 +1,5 @@
 // @flow strict
 
-import { stringify } from 'querystring';
-
 import zlib from 'zlib';
 
 import { describe, it } from 'mocha';
@@ -69,10 +67,17 @@ const TestSchema = new GraphQLSchema({
   }),
 });
 
-function urlString(urlParams?: ?{ [param: string]: mixed }) {
+function stringifyURLParams(urlParams?: {
+  [param: string]: string,
+  ...
+}): string {
+  return new URLSearchParams(urlParams).toString();
+}
+
+function urlString(urlParams?: { [param: string]: string, ... }): string {
   let string = '/graphql';
   if (urlParams) {
-    string += '?' + stringify(urlParams);
+    string += '?' + stringifyURLParams(urlParams);
   }
   return string;
 }
@@ -568,7 +573,7 @@ describe('GraphQL-HTTP tests', () => {
 
       const response = await request(app.listen())
         .post(urlString())
-        .send(stringify({ query: '{test}' }));
+        .send(stringifyURLParams({ query: '{test}' }));
 
       expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
@@ -632,7 +637,7 @@ describe('GraphQL-HTTP tests', () => {
       const response = await request(app.listen())
         .post(urlString())
         .send(
-          stringify({
+          stringifyURLParams({
             query: 'query helloWho($who: String){ test(who: $who) }',
             variables: JSON.stringify({ who: 'Dolly' }),
           }),
@@ -683,7 +688,7 @@ describe('GraphQL-HTTP tests', () => {
           }),
         )
         .send(
-          stringify({
+          stringifyURLParams({
             query: 'query helloWho($who: String){ test(who: $who) }',
           }),
         );
@@ -1073,7 +1078,7 @@ describe('GraphQL-HTTP tests', () => {
       const prettyResponse = await request(app.listen()).get(
         urlString({
           query: '{test}',
-          pretty: 1,
+          pretty: '1',
         }),
       );
 
@@ -1085,7 +1090,7 @@ describe('GraphQL-HTTP tests', () => {
       const unprettyResponse = await request(app.listen()).get(
         urlString({
           query: '{test}',
-          pretty: 0,
+          pretty: '0',
         }),
       );
 

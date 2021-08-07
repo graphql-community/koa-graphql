@@ -998,7 +998,7 @@ describe('GraphQL-HTTP tests', () => {
     it('allows for pre-parsed POST using application/graphql', async () => {
       const app = server();
       app.use(async (ctx, next) => {
-        if (ctx.is('application/graphql')) {
+        if (typeof ctx.is('application/graphql') === 'string') {
           // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await parseBody.text(ctx);
         }
@@ -1023,7 +1023,7 @@ describe('GraphQL-HTTP tests', () => {
     it('does not accept unknown pre-parsed POST string', async () => {
       const app = server();
       app.use(async (ctx, next) => {
-        if (ctx.is('*/*')) {
+        if (typeof ctx.is('*/*') === 'string') {
           // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await parseBody.text(ctx);
         }
@@ -1045,7 +1045,7 @@ describe('GraphQL-HTTP tests', () => {
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
       const app = server();
       app.use(async (ctx, next) => {
-        if (ctx.is('*/*')) {
+        if (typeof ctx.is('*/*') === 'string') {
           const req = ctx.req;
           // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await getRawBody(req, {

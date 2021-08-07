@@ -150,7 +150,7 @@ type Middleware = (ctx: Context) => Promise<void>;
  */
 module.exports = graphqlHTTP;
 function graphqlHTTP(options: Options): Middleware {
-  if (!options) {
+  if (options == null) {
     throw new Error('GraphQL middleware requires options.');
   }
 
@@ -257,7 +257,8 @@ function graphqlHTTP(options: Options): Middleware {
         // a result, otherwise return a 400: Bad Request.
         if (query == null) {
           if (showGraphiQL) {
-            return resolve(null);
+            resolve(null);
+            return;
           }
           throw httpError(400, 'Must provide query string.');
         }
@@ -306,7 +307,8 @@ function graphqlHTTP(options: Options): Middleware {
             // provide it to GraphiQL so that the requester may perform it
             // themselves if desired.
             if (showGraphiQL) {
-              return resolve(null);
+              resolve(null);
+              return;
             }
 
             // Otherwise, report a 405: Method Not Allowed error.

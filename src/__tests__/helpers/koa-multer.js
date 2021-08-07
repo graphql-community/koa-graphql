@@ -1,4 +1,4 @@
-/* eslint-disable callback-return */
+// @flow strict
 
 import thenify from 'thenify';
 import multer from 'multer';
@@ -10,7 +10,7 @@ export default function multerWrapper(options) {
     return async function (ctx, next) {
       const thenified = thenify(_single(param));
       await thenified(ctx.req, ctx.res);
-      await next();
+      return next();
     };
   };
   return upload;

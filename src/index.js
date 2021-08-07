@@ -1,4 +1,4 @@
-/* @flow strict */
+// @flow strict
 
 import {
   Source,
@@ -9,24 +9,25 @@ import {
   formatError,
   getOperationAST,
   specifiedRules,
+  type ExecutionArgs,
+  type ExecutionResult,
+  type GraphQLError,
+  type GraphQLSchema,
+  type GraphQLFieldResolver,
+  type GraphQLTypeResolver,
+  type ValidationContext,
+  type ASTVisitor,
 } from 'graphql';
-import expressGraphQL from 'express-graphql';
+import expressGraphQL, {
+  type GraphQLParams,
+  type RequestInfo,
+} from 'express-graphql';
 import httpError from 'http-errors';
 
-import { renderGraphiQL, type GraphiQLOptions } from './renderGraphiQL';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { type Context, type Request, type Response } from 'koa';
 
-import type {
-  ExecutionArgs,
-  ExecutionResult,
-  GraphQLError,
-  GraphQLSchema,
-  GraphQLFieldResolver,
-  GraphQLTypeResolver,
-  ValidationContext,
-  ASTVisitor,
-} from 'graphql';
-import type { Context, Request, Response } from 'koa';
-import type { GraphQLParams, RequestInfo } from 'express-graphql';
+import { renderGraphiQL, type GraphiQLOptions } from './renderGraphiQL';
 
 const { getGraphQLParams } = expressGraphQL;
 
@@ -42,7 +43,7 @@ export type Options =
   | OptionsResult;
 export type OptionsResult = OptionsData | Promise<OptionsData>;
 
-export type OptionsData = {
+export type OptionsData = {|
   /**
    * A GraphQL schema from graphql-js.
    */
@@ -139,7 +140,7 @@ export type OptionsData = {
    * `__typename` field or alternatively calls the `isTypeOf` method).
    */
   typeResolver?: ?GraphQLTypeResolver<any, any>,
-};
+|};
 
 type Middleware = (ctx: Context) => Promise<void>;
 
@@ -343,6 +344,7 @@ function graphqlHTTP(options: Options): Middleware {
       // Collect and apply any metadata extensions if a function was provided.
       // https://graphql.github.io/graphql-spec/#sec-Response-Format
       if (result && extensionsFn) {
+        // eslint-disable-next-line require-atomic-updates
         result = await Promise.resolve(
           extensionsFn({
             document: documentAST,
@@ -360,6 +362,7 @@ function graphqlHTTP(options: Options): Middleware {
       }
     } catch (error) {
       // If an error was caught, report the httpError status, or 500.
+      // eslint-disable-next-line require-atomic-updates
       response.status = error.status ?? 500;
 
       if (error.headers != null) {
@@ -368,6 +371,7 @@ function graphqlHTTP(options: Options): Middleware {
         }
       }
 
+      // eslint-disable-next-line require-atomic-updates
       result = { errors: error.graphqlErrors ?? [error] };
     }
 

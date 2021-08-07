@@ -1,9 +1,12 @@
+// @flow strict
+
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
 import { GraphQLSchema } from 'graphql';
+
 import graphqlHTTP from '..';
 
 describe('Useful errors when incorrectly used', () => {

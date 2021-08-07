@@ -1,14 +1,15 @@
-/* @flow strict */
+// @flow strict
 
-/* eslint-disable callback-return */
+import { stringify } from 'querystring';
 
-import { expect } from 'chai';
+import zlib from 'zlib';
+
 import { describe, it } from 'mocha';
 import sinon from 'sinon';
-import { stringify } from 'querystring';
-import zlib from 'zlib';
+
+import { expect } from 'chai';
 import multer from 'multer';
-import multerWrapper from './helpers/koa-multer';
+
 import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
@@ -31,7 +32,10 @@ import {
   parse,
   type ASTVisitor,
 } from 'graphql';
+
 import graphqlHTTP from '../index';
+
+import multerWrapper from './helpers/koa-multer';
 
 const QueryRootType = new GraphQLObjectType({
   name: 'QueryRoot',
@@ -41,7 +45,7 @@ const QueryRootType = new GraphQLObjectType({
       args: {
         who: { type: GraphQLString },
       },
-      resolve: (root, args) => 'Hello ' + (args.who ?? 'World'),
+      resolve: (_root, args) => 'Hello ' + (args.who ?? 'World'),
     },
     thrower: {
       type: GraphQLString,
@@ -321,7 +325,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             test: {
               type: GraphQLString,
-              resolve: (obj, args, context) => context,
+              resolve: (_obj, _args, context) => context,
             },
           },
         }),
@@ -431,7 +435,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             test: {
               type: GraphQLString,
-              resolve: (obj, args, context) => context.foo,
+              resolve: (_obj, _args, context) => context.foo,
             },
           },
         }),
@@ -822,7 +826,6 @@ describe('GraphQL-HTTP tests', () => {
         .set('Content-Type', 'application/json')
         .set('Content-Encoding', 'gzip');
 
-      // eslint-disable-next-line no-sync
       req.write(zlib.gzipSync('{ "query": "{ test }" }'));
 
       const response = await req;
@@ -851,7 +854,6 @@ describe('GraphQL-HTTP tests', () => {
         .set('Content-Type', 'application/json')
         .set('Content-Encoding', 'deflate');
 
-      // eslint-disable-next-line no-sync
       req.write(zlib.deflateSync('{ "query": "{ test }" }'));
 
       const response = await req;
@@ -912,7 +914,7 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP((req, ctx) => {
+          graphqlHTTP((_req, ctx) => {
             expect(ctx.req.file.originalname).to.equal('test.txt');
             return {
               schema: TestMutationSchema,
@@ -944,11 +946,12 @@ describe('GraphQL-HTTP tests', () => {
 
     it('allows for pre-parsed POST using application/graphql', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async (ctx, next) => {
         if (ctx.is('application/graphql')) {
+          // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await parseBody.text(ctx);
         }
-        await next();
+        return next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -968,11 +971,12 @@ describe('GraphQL-HTTP tests', () => {
 
     it('does not accept unknown pre-parsed POST string', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async (ctx, next) => {
         if (ctx.is('*/*')) {
+          // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await parseBody.text(ctx);
         }
-        await next();
+        return next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -989,16 +993,17 @@ describe('GraphQL-HTTP tests', () => {
 
     it('does not accept unknown pre-parsed POST raw Buffer', async () => {
       const app = server();
-      app.use(async function (ctx, next) {
+      app.use(async (ctx, next) => {
         if (ctx.is('*/*')) {
           const req = ctx.req;
+          // eslint-disable-next-line require-atomic-updates
           ctx.request.body = await getRawBody(req, {
             length: req.headers['content-length'],
             limit: '1mb',
             encoding: null,
           });
         }
-        await next();
+        return next();
       });
 
       app.use(mount(urlString(), graphqlHTTP({ schema: TestSchema })));
@@ -2113,7 +2118,7 @@ describe('GraphQL-HTTP tests', () => {
           fields: {
             myField: {
               type: GraphQLString,
-              resolve(parentValue, _, sess) {
+              resolve(_parentValue, _, sess) {
                 return (sess: any).id;
               },
             },
@@ -2123,15 +2128,15 @@ describe('GraphQL-HTTP tests', () => {
       const app = server();
       app.keys = ['some secret hurr'];
       app.use(session(app));
-      app.use(async function (ctx, next) {
+      app.use((ctx, next) => {
         ctx.session.id = 'me';
-        await next();
+        return next();
       });
 
       app.use(
         mount(
           '/graphql',
-          graphqlHTTP((req, res, ctx) => ({
+          graphqlHTTP((_req, _res, ctx) => ({
             schema: SessionAwareGraphQLSchema,
             context: (ctx: any).session,
           })),
@@ -2342,9 +2347,9 @@ describe('GraphQL-HTTP tests', () => {
           urlString(),
           graphqlHTTP({
             schema: TestSchema,
-            async extensions() {
+            extensions() {
               // Note: you can await arbitrary things here!
-              return { eventually: 42 };
+              return Promise.resolve({ eventually: 42 });
             },
           }),
         ),

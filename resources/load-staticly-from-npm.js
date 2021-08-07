@@ -28,7 +28,6 @@ module.exports = function inlineInvariant(context) {
           const npmPath = node.arguments[0].value;
           const filePath = require.resolve(npmPath);
 
-          // eslint-disable-next-line no-sync
           const content = fs.readFileSync(filePath, 'utf-8');
 
           path.replaceWith(context.types.stringLiteral(content));

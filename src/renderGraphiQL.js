@@ -1,11 +1,12 @@
-/* @flow strict */
+// @flow strict
+
 import { type ExecutionResult } from 'graphql';
 
 type EditorThemeParam =
-  | {
+  | {|
       name: string,
       url: string,
-    }
+    |}
   | string;
 
 type GraphiQLData = {|
@@ -31,11 +32,11 @@ export type GraphiQLOptions = {|
 |};
 
 type EditorTheme =
-  | {
+  | {|
       name: string,
       link: string,
-    }
-  | {};
+    |}
+  | {||};
 
 // Current latest version of codeMirror.
 const CODE_MIRROR_VERSION = '5.53.2';

@@ -1,3 +1,5 @@
-/* eslint-disable no-console */
+// @flow strict
+
+'use strict';
 
 require('@babel/register')();

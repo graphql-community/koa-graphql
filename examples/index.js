@@ -1,8 +1,11 @@
-/* eslint-disable no-console */
+// @flow strict
+
 import Koa from 'koa';
 import mount from 'koa-mount';
-import graphqlHTTP from '../src/';
+
 import { buildSchema } from 'graphql';
+
+import graphqlHTTP from '../src/index';
 
 // Construct a schema, using GraphQL schema language
 const schema = buildSchema(`

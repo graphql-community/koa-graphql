@@ -52,7 +52,7 @@ rules:
   flowtype/sort-keys: off
   flowtype/spread-exact-type: off
   flowtype/type-id-match: [error, '^[A-Z]|^\$']
-  flowtype/type-import-style: [error, identifier, { ignoreTypeDefault: true }]
+  flowtype/type-import-style: [error, declaration]
   flowtype/use-flow-type: error
 
   # Bellow rules are disabled because coflicts with Prettier, see:
@@ -190,7 +190,7 @@ rules:
   import/dynamic-import-chunkname: off
 
   ##############################################################################
-  # ESLint builtin rules list based on `v7.1.x`
+  # ESLint builtin rules list based on `v7.2.x`
   ##############################################################################
 
   # Possible Errors
@@ -299,7 +299,7 @@ rules:
   no-unused-labels: error
   no-useless-call: error
   no-useless-catch: error
-  no-useless-concat: off
+  no-useless-concat: error
   no-useless-escape: error
   no-useless-return: error
   no-void: error
@@ -391,7 +391,7 @@ rules:
   no-class-assign: error
   no-const-assign: error
   no-dupe-class-members: error
-  no-duplicate-imports: error
+  no-duplicate-imports: off # Superseded by `import/no-duplicates`
   no-new-symbol: error
   no-restricted-exports: off
   no-restricted-imports: off
@@ -477,11 +477,11 @@ rules:
   wrap-regex: off
   yield-star-spacing: off
 
+ignorePatterns: 'integrationTests/ts/*.ts'
 overrides:
   - files: '**/*.ts'
     parser: '@typescript-eslint/parser'
     parserOptions:
-      tsconfigRootDir: './types/'
       project: ['tsconfig.json']
     plugins:
       - '@typescript-eslint'
@@ -503,8 +503,7 @@ overrides:
       '@typescript-eslint/adjacent-overload-signatures': error
       '@typescript-eslint/array-type': [error, { default: generic }]
       '@typescript-eslint/await-thenable': error
-      '@typescript-eslint/ban-ts-comment':
-        [error, { 'ts-expect-error': 'allow-with-description' }]
+      '@typescript-eslint/ban-ts-comment': [error, { 'ts-expect-error': false }]
       '@typescript-eslint/ban-types': error
       '@typescript-eslint/class-literal-property-style': off
       '@typescript-eslint/consistent-type-assertions':
@@ -633,6 +632,16 @@ overrides:
       import/no-extraneous-dependencies: [error, { devDependencies: true }]
       import/no-nodejs-modules: off
       no-sync: off
+  - files: 'integrationTests/**'
+    parserOptions:
+      sourceType: script
+    rules:
+      node/no-unpublished-import: off
+      node/no-unpublished-require: off
+      node/no-sync: off
+      import/no-extraneous-dependencies: [error, { devDependencies: true }]
+      import/no-nodejs-modules: off
+      no-console: off
   - files: 'resources/**'
     parserOptions:
       sourceType: script
@@ -648,6 +657,7 @@ overrides:
       import/no-commonjs: off
       no-await-in-loop: off
       no-console: off
+
   - files: 'examples/**'
     rules:
       internal-rules/no-dir-import: off

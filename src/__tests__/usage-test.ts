@@ -1,5 +1,3 @@
-// @flow strict
-
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
 import request from 'supertest';
@@ -7,11 +5,12 @@ import Koa from 'koa';
 import mount from 'koa-mount';
 import { GraphQLSchema } from 'graphql';
 
-import graphqlHTTP from '..';
+import graphqlHTTP from '../index';
 
 describe('Useful errors when incorrectly used', () => {
   it('requires an option factory function', () => {
     expect(() => {
+      // @ts-expect-error
       graphqlHTTP();
     }).to.throw('GraphQL middleware requires options.');
   });
@@ -22,6 +21,7 @@ describe('Useful errors when incorrectly used', () => {
     app.use(
       mount(
         '/graphql',
+        // @ts-expect-error
         graphqlHTTP(() => null),
       ),
     );
@@ -45,6 +45,7 @@ describe('Useful errors when incorrectly used', () => {
     app.use(
       mount(
         '/graphql',
+        // @ts-expect-error
         graphqlHTTP(() => Promise.resolve(null)),
       ),
     );
@@ -68,6 +69,7 @@ describe('Useful errors when incorrectly used', () => {
     app.use(
       mount(
         '/graphql',
+        // @ts-expect-error
         graphqlHTTP(() => ({})),
       ),
     );
@@ -88,6 +90,7 @@ describe('Useful errors when incorrectly used', () => {
     app.use(
       mount(
         '/graphql',
+        // @ts-expect-error
         graphqlHTTP(() => Promise.resolve({})),
       ),
     );
@@ -103,6 +106,7 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('validates schema before executing request', async () => {
+    // @ts-expect-error
     const schema = new GraphQLSchema({ directives: [null] });
 
     const app = new Koa();

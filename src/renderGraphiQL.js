@@ -1,6 +1,6 @@
 // @flow strict
 
-import { type ExecutionResult } from 'graphql';
+import type { ExecutionResult } from 'graphql';
 
 type EditorThemeParam =
   | {|

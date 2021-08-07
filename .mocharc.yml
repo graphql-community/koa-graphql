@@ -1,3 +1,4 @@
 check-leaks: true
 require:
   - './resources/register.js'
+  - ts-node/register

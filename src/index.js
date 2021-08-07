@@ -1,5 +1,17 @@
 // @flow strict
 
+import type {
+  ExecutionArgs,
+  ExecutionResult,
+  GraphQLError,
+  GraphQLSchema,
+  GraphQLFieldResolver,
+  GraphQLTypeResolver,
+  ValidationContext,
+  ASTVisitor,
+} from 'graphql';
+import type { GraphQLParams, RequestInfo } from 'express-graphql';
+import httpError from 'http-errors';
 import {
   Source,
   validateSchema,
@@ -9,25 +21,13 @@ import {
   formatError,
   getOperationAST,
   specifiedRules,
-  type ExecutionArgs,
-  type ExecutionResult,
-  type GraphQLError,
-  type GraphQLSchema,
-  type GraphQLFieldResolver,
-  type GraphQLTypeResolver,
-  type ValidationContext,
-  type ASTVisitor,
 } from 'graphql';
-import expressGraphQL, {
-  type GraphQLParams,
-  type RequestInfo,
-} from 'express-graphql';
-import httpError from 'http-errors';
+import expressGraphQL from 'express-graphql';
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { type Context, type Request, type Response } from 'koa';
+import type { Context, Request, Response } from 'koa';
 
-import { renderGraphiQL, type GraphiQLOptions } from './renderGraphiQL';
+import { renderGraphiQL } from './renderGraphiQL';
+import type { GraphiQLOptions } from './renderGraphiQL';
 
 const { getGraphQLParams } = expressGraphQL;
 

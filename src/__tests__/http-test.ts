@@ -1,38 +1,87 @@
-// @flow strict
-
 import zlib from 'zlib';
+import { Readable } from 'stream';
 
-import { describe, it } from 'mocha';
-import sinon from 'sinon';
-
-import { expect } from 'chai';
-import multer from 'multer';
-
-import request from 'supertest';
 import Koa from 'koa';
 import mount from 'koa-mount';
 import session from 'koa-session';
 import parseBody from 'co-body';
 import getRawBody from 'raw-body';
+import request from 'supertest';
 
+import type { ASTVisitor, ValidationContext } from 'graphql';
+import sinon from 'sinon';
+import multer from 'multer';
+import { expect } from 'chai';
+import { describe, it } from 'mocha';
 import {
-  type ASTVisitor,
-  type ValidationContext,
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLNonNull,
-  GraphQLString,
-  GraphQLError,
   Source,
-  validate,
-  execute,
+  GraphQLError,
+  GraphQLString,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
   parse,
+  execute,
+  validate,
   buildSchema,
 } from 'graphql';
 
 import graphqlHTTP from '../index';
 
 import multerWrapper from './helpers/koa-multer';
+
+declare module 'koa' {
+  interface Request {
+    body?: any;
+    rawBody: string;
+  }
+}
+
+type MulterFile = {
+  /** Name of the form field associated with this file. */
+  fieldname: string;
+  /** Name of the file on the uploader's computer. */
+  originalname: string;
+  /**
+   * Value of the `Content-Transfer-Encoding` header for this file.
+   * @deprecated since July 2015
+   * @see RFC 7578, Section 4.7
+   */
+  encoding: string;
+  /** Value of the `Content-Type` header for this file. */
+  mimetype: string;
+  /** Size of the file in bytes. */
+  size: number;
+  /**
+   * A readable stream of this file. Only available to the `_handleFile`
+   * callback for custom `StorageEngine`s.
+   */
+  stream: Readable;
+  /** `DiskStorage` only: Directory to which this file has been uploaded. */
+  destination: string;
+  /** `DiskStorage` only: Name of this file within `destination`. */
+  filename: string;
+  /** `DiskStorage` only: Full path to the uploaded file. */
+  path: string;
+  /** `MemoryStorage` only: A Buffer containing the entire file. */
+  buffer: Buffer;
+};
+
+declare module 'http' {
+  interface IncomingMessage {
+    file?: MulterFile | undefined;
+    /**
+     * Array or dictionary of `Multer.File` object populated by `array()`,
+     * `fields()`, and `any()` middleware.
+     */
+    files?:
+      | {
+          [fieldname: string]: Array<MulterFile>;
+        }
+      | Array<MulterFile>
+      | undefined;
+  }
+}
 
 const QueryRootType = new GraphQLObjectType({
   name: 'QueryRoot',
@@ -42,7 +91,8 @@ const QueryRootType = new GraphQLObjectType({
       args: {
         who: { type: GraphQLString },
       },
-      resolve: (_root, args) => 'Hello ' + (args.who ?? 'World'),
+      resolve: (_root, args: { who?: string }) =>
+        'Hello ' + (args.who ?? 'World'),
     },
     thrower: {
       type: GraphQLString,
@@ -66,14 +116,11 @@ const TestSchema = new GraphQLSchema({
   }),
 });
 
-function stringifyURLParams(urlParams?: {
-  [param: string]: string,
-  ...
-}): string {
+function stringifyURLParams(urlParams?: { [param: string]: string }): string {
   return new URLSearchParams(urlParams).toString();
 }
 
-function urlString(urlParams?: { [param: string]: string, ... }): string {
+function urlString(urlParams?: { [param: string]: string }): string {
   let string = '/graphql';
   if (urlParams) {
     string += '?' + stringifyURLParams(urlParams);
@@ -81,8 +128,8 @@ function urlString(urlParams?: { [param: string]: string, ... }): string {
   return string;
 }
 
-function server() {
-  const app = new Koa();
+function server<StateT = Koa.DefaultState, ContextT = Koa.DefaultContext>() {
+  const app = new Koa<StateT, ContextT>();
 
   /* istanbul ignore next Error handler added only for debugging failed tests */
   app.on('error', (error) => {
@@ -919,7 +966,7 @@ describe('GraphQL-HTTP tests', () => {
         mount(
           urlString(),
           graphqlHTTP((_req, ctx) => {
-            expect(ctx.req.file.originalname).to.equal('test.txt');
+            expect(ctx.req.file?.originalname).to.equal('test.txt');
             return {
               schema: TestMutationSchema,
               rootValue: { request: ctx.req },
@@ -1046,13 +1093,20 @@ describe('GraphQL-HTTP tests', () => {
       );
 
       expect(response.text).to.equal(
-        '{\n' + '  "data": {\n' + '    "test": "Hello World"\n' + '  }\n' + '}',
+        [
+          // Pretty printed JSON
+          '{',
+          '  "data": {',
+          '    "test": "Hello World"',
+          '  }',
+          '}',
+        ].join('\n'),
       );
     });
 
     it('supports pretty printing configured by request', async () => {
       const app = server();
-      let pretty;
+      let pretty: boolean | undefined;
 
       app.use(
         mount(
@@ -1082,7 +1136,14 @@ describe('GraphQL-HTTP tests', () => {
       );
 
       expect(prettyResponse.text).to.equal(
-        '{\n' + '  "data": {\n' + '    "test": "Hello World"\n' + '  }\n' + '}',
+        [
+          // Pretty printed JSON
+          '{',
+          '  "data": {',
+          '    "test": "Hello World"',
+          '  }',
+          '}',
+        ].join('\n'),
       );
 
       pretty = false;
@@ -1655,7 +1716,7 @@ describe('GraphQL-HTTP tests', () => {
       );
 
       expect(response.status).to.equal(405);
-      expect(response.headers.allow).to.equal('GET, POST');
+      expect(response.get('allow')).to.equal('GET, POST');
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [{ message: 'GraphQL only supports GET and POST requests.' }],
       });
@@ -2120,7 +2181,7 @@ describe('GraphQL-HTTP tests', () => {
             myField: {
               type: GraphQLString,
               resolve(_parentValue, _, sess) {
-                return (sess: any).id;
+                return sess.id;
               },
             },
           },
@@ -2130,7 +2191,9 @@ describe('GraphQL-HTTP tests', () => {
       app.keys = ['some secret hurr'];
       app.use(session(app));
       app.use((ctx, next) => {
-        ctx.session.id = 'me';
+        if (ctx.session !== null) {
+          ctx.session.id = 'me';
+        }
         return next();
       });
 
@@ -2139,7 +2202,7 @@ describe('GraphQL-HTTP tests', () => {
           '/graphql',
           graphqlHTTP((_req, _res, ctx) => ({
             schema: SessionAwareGraphQLSchema,
-            context: (ctx: any).session,
+            context: ctx.session,
           })),
         ),
       );
@@ -2168,7 +2231,6 @@ describe('GraphQL-HTTP tests', () => {
             async customExecuteFn(args) {
               seenExecuteArgs = args;
               const result = await Promise.resolve(execute(args));
-              result.data.test2 = 'Modification';
               return {
                 ...result,
                 data: {

@@ -73,10 +73,13 @@ function urlString(urlParams?: ?{ [param: string]: mixed }) {
 
 function server() {
   const app = new Koa();
+
+  /* istanbul ignore next Error handler added only for debugging failed tests */
   app.on('error', (error) => {
     // eslint-disable-next-line no-console
-    console.log('App encountered an error:', error);
+    console.warn('App encountered an error:', error);
   });
+
   return app;
 }
 
@@ -1446,6 +1449,29 @@ describe('GraphQL-HTTP tests', () => {
       });
     });
 
+    it('handles invalid body', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .post(urlString())
+        .set('Content-Type', 'application/json')
+        .send(`{ "query": "{ ${new Array(102400).fill('test').join('')} }" }`);
+
+      expect(response.status).to.equal(400);
+      expect(JSON.parse(response.text)).to.deep.equal({
+        errors: [{ message: 'Invalid body: request entity too large.' }],
+      });
+    });
+
     it('handles poorly formed variables', async () => {
       const app = server();
 
@@ -1542,6 +1568,32 @@ describe('GraphQL-HTTP tests', () => {
           },
         ],
       });
+    });
+
+    it('allows disabling prettifying poorly formed requests', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP({
+            schema: TestSchema,
+            pretty: false,
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          variables: 'who:You',
+          query: 'query helloWho($who: String){ test(who: $who) }',
+        }),
+      );
+
+      expect(response.status).to.equal(400);
+      expect(response.text).to.equal(
+        '{"errors":[{"message":"Variables are invalid JSON."}]}',
+      );
     });
 
     it('handles invalid variables', async () => {
@@ -2303,6 +2355,32 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.text).to.equal(
         '{"data":{"test":"Hello World"},"extensions":{"eventually":42}}',
       );
+    });
+
+    it('does nothing if extensions function does not return an object', async () => {
+      const app = server();
+
+      app.use(
+        mount(
+          urlString(),
+          // @ts-expect-error
+          graphqlHTTP(() => ({
+            schema: TestSchema,
+            context: { foo: 'bar' },
+            extensions({ context }) {
+              return () => ({ contextValue: JSON.stringify(context) });
+            },
+          })),
+        ),
+      );
+
+      const response = await request(app.listen())
+        .get(urlString({ query: '{test}', raw: '' }))
+        .set('Accept', 'text/html');
+
+      expect(response.status).to.equal(200);
+      expect(response.type).to.equal('application/json');
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
   });
 });

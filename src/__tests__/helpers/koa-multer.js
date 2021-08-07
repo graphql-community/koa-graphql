@@ -1,6 +1,7 @@
 // @flow strict
 
-import thenify from 'thenify';
+import util from 'util';
+
 import multer from 'multer';
 
 export default function multerWrapper(options) {
@@ -8,8 +9,8 @@ export default function multerWrapper(options) {
   const _single = upload.single.bind(upload);
   upload.single = function (param) {
     return async function (ctx, next) {
-      const thenified = thenify(_single(param));
-      await thenified(ctx.req, ctx.res);
+      const promisified = util.promisify(_single(param));
+      await promisified(ctx.req, ctx.res);
       return next();
     };
   };

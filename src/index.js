@@ -22,14 +22,12 @@ import {
   getOperationAST,
   specifiedRules,
 } from 'graphql';
-import expressGraphQL from 'express-graphql';
+import { getGraphQLParams } from 'express-graphql';
 
 import type { Context, Request, Response } from 'koa';
 
 import { renderGraphiQL } from './renderGraphiQL';
 import type { GraphiQLOptions } from './renderGraphiQL';
-
-const { getGraphQLParams } = expressGraphQL;
 
 /**
  * Used to configure the graphqlHTTP middleware by providing a schema

@@ -1344,7 +1344,7 @@ describe('GraphQL-HTTP tests', () => {
 
       const response = await request(app.listen()).get(
         urlString({
-          query: 'syntaxerror',
+          query: 'syntax_error',
         }),
       );
 
@@ -1352,7 +1352,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(JSON.parse(response.text)).to.deep.equal({
         errors: [
           {
-            message: 'Syntax Error: Unexpected Name "syntaxerror".',
+            message: 'Syntax Error: Unexpected Name "syntax_error".',
             locations: [{ line: 1, column: 1 }],
           },
         ],
@@ -1684,7 +1684,7 @@ describe('GraphQL-HTTP tests', () => {
         .post(urlString())
         .send({
           query: 'query helloWho($who: String){ test(who: $who) }',
-          variables: { who: ['Dolly', 'Jonty'] },
+          variables: { who: ['John', 'Jane'] },
         });
 
       expect(response.status).to.equal(500);
@@ -1693,7 +1693,7 @@ describe('GraphQL-HTTP tests', () => {
           {
             locations: [{ column: 16, line: 1 }],
             message:
-              'Variable "$who" got invalid value ["Dolly", "Jonty"]; String cannot represent a non string value: ["Dolly", "Jonty"]',
+              'Variable "$who" got invalid value ["John", "Jane"]; String cannot represent a non string value: ["John", "Jane"]',
           },
         ],
       });

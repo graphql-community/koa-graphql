@@ -54,8 +54,8 @@ function safeSerialize(data: string | boolean | null | void): string {
     : 'undefined';
 }
 
-// Implemented as Babel transformation, see ../resources/load-staticly-from-npm.js
-declare function loadFileStaticlyFromNPM(npmPath: string): string;
+// Implemented as Babel transformation, see ../resources/load-statically-from-npm.js
+declare function loadFileStaticallyFromNPM(npmPath: string): string;
 
 function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
   if (!editorTheme) {
@@ -129,28 +129,28 @@ add "&raw" to the end of the URL within a browser.
   </style>
   <style>
     /* graphiql/graphiql.css */
-    ${loadFileStaticlyFromNPM('graphiql/graphiql.css')}
+    ${loadFileStaticallyFromNPM('graphiql/graphiql.css')}
   </style>
   ${editorTheme.link || ''}
   <script>
     // promise-polyfill/dist/polyfill.min.js
-    ${loadFileStaticlyFromNPM('promise-polyfill/dist/polyfill.min.js')}
+    ${loadFileStaticallyFromNPM('promise-polyfill/dist/polyfill.min.js')}
   </script>
   <script>
     // unfetch/dist/unfetch.umd.js
-    ${loadFileStaticlyFromNPM('unfetch/dist/unfetch.umd.js')}
+    ${loadFileStaticallyFromNPM('unfetch/dist/unfetch.umd.js')}
   </script>
   <script>
     // react/umd/react.production.min.js
-    ${loadFileStaticlyFromNPM('react/umd/react.production.min.js')}
+    ${loadFileStaticallyFromNPM('react/umd/react.production.min.js')}
   </script>
   <script>
     // react-dom/umd/react-dom.production.min.js
-    ${loadFileStaticlyFromNPM('react-dom/umd/react-dom.production.min.js')}
+    ${loadFileStaticallyFromNPM('react-dom/umd/react-dom.production.min.js')}
   </script>
   <script>
     // graphiql/graphiql.min.js
-    ${loadFileStaticlyFromNPM('graphiql/graphiql.min.js')}
+    ${loadFileStaticallyFromNPM('graphiql/graphiql.min.js')}
   </script>
 </head>
 <body>

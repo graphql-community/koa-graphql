@@ -3,10 +3,12 @@
 import type {
   ExecutionArgs,
   ExecutionResult,
+  FormattedExecutionResult,
   GraphQLError,
   GraphQLSchema,
   GraphQLFieldResolver,
   GraphQLTypeResolver,
+  GraphQLFormattedError,
   ValidationContext,
   ASTVisitor,
 } from 'graphql';
@@ -91,7 +93,10 @@ export type OptionsData = {|
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
    */
-  customFormatErrorFn?: ?(error: GraphQLError, context?: ?any) => mixed,
+  customFormatErrorFn?: ?(
+    error: GraphQLError,
+    context?: ?any,
+  ) => GraphQLFormattedError,
 
   /**
    * An optional function which will be used to create a document instead of
@@ -103,7 +108,7 @@ export type OptionsData = {|
    * `formatError` is deprecated and replaced by `customFormatErrorFn`. It will
    *  be removed in version 1.0.0.
    */
-  formatError?: ?(error: GraphQLError, context?: ?any) => mixed,
+  formatError?: ?(error: GraphQLError, context?: ?any) => GraphQLFormattedError,
 
   /**
    * An optional function for adding additional metadata to the GraphQL response
@@ -383,12 +388,14 @@ function graphqlHTTP(options: Options): Middleware {
     if (response.status === 200 && result && !result.data) {
       response.status = 500;
     }
-    // Format any encountered errors.
-    if (result && result.errors) {
-      (result: any).errors = result.errors.map((err) =>
-        formatErrorFn(err, context),
-      );
-    }
+
+    const formattedResult: FormattedExecutionResult =
+      result && result.errors
+        ? {
+            ...result,
+            errors: result.errors.map((err) => formatErrorFn(err, context)),
+          }
+        : result;
 
     // If allowed to show GraphiQL, present it instead of JSON.
     if (showGraphiQL) {
@@ -396,14 +403,16 @@ function graphqlHTTP(options: Options): Middleware {
         query,
         variables,
         operationName,
-        result,
+        result: formattedResult,
         options: typeof showGraphiQL !== 'boolean' ? showGraphiQL : {},
       });
       response.type = 'text/html';
       response.body = payload;
     } else {
       // Otherwise, present JSON directly.
-      const payload = pretty ? JSON.stringify(result, null, 2) : result;
+      const payload = pretty
+        ? JSON.stringify(formattedResult, null, 2)
+        : formattedResult;
       response.type = 'application/json';
       response.body = payload;
     }

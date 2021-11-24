@@ -2369,7 +2369,9 @@ describe('GraphQL-HTTP tests', () => {
           urlString(),
           graphqlHTTP({
             schema: TestSchema,
-            customFormatErrorFn: () => null,
+            customFormatErrorFn: () => ({
+              message: 'Some generic error message.',
+            }),
             extensions({ result }) {
               return { preservedResult: { ...result } };
             },
@@ -2386,7 +2388,7 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.status).to.equal(200);
       expect(JSON.parse(response.text)).to.deep.equal({
         data: { thrower: null },
-        errors: [null],
+        errors: [{ message: 'Some generic error message.' }],
         extensions: {
           preservedResult: {
             data: { thrower: null },

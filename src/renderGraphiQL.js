@@ -1,6 +1,6 @@
 // @flow strict
 
-import type { ExecutionResult } from 'graphql';
+import type { FormattedExecutionResult } from 'graphql';
 
 type EditorThemeParam =
   | {|
@@ -13,7 +13,7 @@ type GraphiQLData = {|
   query: ?string,
   variables: ?{ [param: string]: mixed },
   operationName: ?string,
-  result?: ?ExecutionResult,
+  result?: ?FormattedExecutionResult,
   options: ?GraphiQLOptions,
 |};
 

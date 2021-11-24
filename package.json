@@ -7,7 +7,7 @@
     "Daniel Schafer <dschafer@fb.com>",
     "C.T. Lin <chentsulin@gmail.com>"
   ],
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "sideEffects": false,
   "homepage": "https://github.com/graphql-community/koa-graphql",
   "bugs": {

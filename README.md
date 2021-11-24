@@ -443,7 +443,7 @@ Welcome pull requests!
 
 ### License
 
-BSD-3-Clause
+MIT
 
 [`graphql-js`]: https://github.com/graphql/graphql-js
 [`formaterror`]: https://github.com/graphql/graphql-js/blob/main/src/error/formatError.js

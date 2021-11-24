@@ -26,6 +26,12 @@ export type GraphiQLOptions = {|
   defaultQuery?: ?string,
 
   /**
+   * An optional boolean which enables the header editor when true.
+   * Defaults to false.
+   */
+  headerEditorEnabled?: boolean,
+
+  /**
    * By passing an object you may change the theme of GraphiQL.
    */
   editorTheme?: EditorThemeParam,
@@ -42,7 +48,7 @@ type EditorTheme =
 const CODE_MIRROR_VERSION = '5.53.2';
 
 // Ensures string values are safe to be used within a <script> tag.
-function safeSerialize(data: ?string): string {
+function safeSerialize(data: string | boolean | null | void): string {
   return data != null
     ? JSON.stringify(data).replace(/\//g, '\\/')
     : 'undefined';
@@ -94,6 +100,7 @@ export function renderGraphiQL(data: GraphiQLData): string {
     data.result != null ? JSON.stringify(data.result, null, 2) : null;
   const operationName = data.operationName;
   const defaultQuery = data.options?.defaultQuery;
+  const headerEditorEnabled = data.options?.headerEditorEnabled;
   const editorTheme = getEditorThemeParams(data.options.editorTheme);
 
   return `<!--
@@ -229,6 +236,7 @@ add "&raw" to the end of the URL within a browser.
         variables: ${safeSerialize(variablesString)},
         operationName: ${safeSerialize(operationName)},
         defaultQuery: ${safeSerialize(defaultQuery)},
+        headerEditorEnabled: ${safeSerialize(headerEditorEnabled)},
       }),
       document.getElementById('graphiql')
     );

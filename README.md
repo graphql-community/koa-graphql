@@ -100,6 +100,10 @@ The `graphqlHTTP` function accepts the following options:
   - **`defaultQuery`**: An optional GraphQL string to use when no query
     is provided and no stored query exists from a previous session.
     If undefined is provided, GraphiQL will use its own default query.
+  
+  - **`headerEditorEnabled`**: An optional boolean which enables the header editor when true.
+    Defaults to false.
+
   - **`editorTheme`**: By passing an object you may change the theme of GraphiQL.
     Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
 

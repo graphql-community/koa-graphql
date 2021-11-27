@@ -2,7 +2,3 @@
 dist
 node_modules
 coverage
-
-# Ingore flow files
-flow-typed
-resources/interfaces

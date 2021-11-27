@@ -2,7 +2,6 @@ module.exports = {
   presets: [['@babel/preset-env', { targets: { node: '12' } }]],
   plugins: [
     './resources/load-statically-from-npm.js',
-    '@babel/plugin-transform-flow-strip-types',
   ],
   overrides: [
     {

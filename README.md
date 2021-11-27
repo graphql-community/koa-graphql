@@ -325,7 +325,7 @@ export function DisallowMetadataQueries(context) {
 }
 ```
 
-### Disabling introspection
+### Disabling Introspection
 
 Disabling introspection does not reflect best practices and does not necessarily make your
 application any more secure. Nevertheless, disabling introspection is possible by utilizing the
@@ -346,7 +346,7 @@ app.use(
 );
 ```
 
-## Custom GraphiQL themes
+## Custom GraphiQL Themes
 
 To use custom GraphiQL theme you should pass to `graphiql` option an object with
 the property `editorTheme`. It could be a string with the name of a theme from `CodeMirror`
@@ -430,7 +430,7 @@ customFormatErrorFn: (error, ctx) => ({
 
 - [tests](https://github.com/graphql-community/koa-graphql/blob/main/src/__tests__/http-test.js)
 
-### Other relevant projects
+### Other Relevant Projects
 
 Please checkout [awesome-graphql](https://github.com/chentsulin/awesome-graphql).
 

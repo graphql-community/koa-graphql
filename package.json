@@ -28,6 +28,14 @@
     "node": ">= 10.x"
   },
   "main": "dist/index.js",
+  "types": "index.d.ts",
+  "typesVersions": {
+    "<3.8": {
+      "*": [
+        "ts3.4/*"
+      ]
+    }
+  },
   "directories": {
     "lib": "./dist"
   },
@@ -50,7 +58,7 @@
     "build:flow": "find ./src -name '*.js' -not -path '*/__tests__*' | while read filepath; do cp $filepath `echo $filepath | sed 's/\\/src\\//\\/dist\\//g'`.flow; done",
     "watch": "node resources/watch.js",
     "preversion": "npm test",
-    "start": "node -r babel-register examples/index.js"
+    "start": "node -r ./resources/register.js examples/index.ts"
   },
   "dependencies": {
     "express-graphql": "0.12.0",
@@ -64,6 +72,7 @@
     "@babel/register": "^7.14.5",
     "@types/chai": "^4.2.21",
     "@types/co-body": "^6.1.0",
+    "@types/http-errors": "^1.8.1",
     "@types/koa": "^2.13.4",
     "@types/koa-mount": "^4.0.0",
     "@types/koa-session": "^5.10.4",
@@ -78,6 +87,7 @@
     "co-body": "^6.0.0",
     "codemirror": "^5.62.2",
     "cspell": "^4.2.2",
+    "downlevel-dts": "^0.7.0",
     "eslint": "^7.31.0",
     "eslint-plugin-flowtype": "^5.9.0",
     "eslint-plugin-import": "^2.23.4",

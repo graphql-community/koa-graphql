@@ -5,7 +5,7 @@ import Koa from 'koa';
 import mount from 'koa-mount';
 import { GraphQLSchema } from 'graphql';
 
-import graphqlHTTP from '../index';
+import { graphqlHTTP } from '../index';
 
 describe('Useful errors when incorrectly used', () => {
   it('requires an option factory function', () => {

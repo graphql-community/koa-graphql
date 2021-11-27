@@ -102,6 +102,8 @@ The `graphqlHTTP` function accepts the following options:
   - **`headerEditorEnabled`**: An optional boolean which enables the header editor when true.
     Defaults to false.
 
+  - **`shouldPersistHeaders`**
+
   - **`editorTheme`**: By passing an object you may change the theme of GraphiQL.
     Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
 

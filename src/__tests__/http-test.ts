@@ -545,6 +545,46 @@ describe('GraphQL-HTTP tests', () => {
       expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
     });
 
+    it('Provides an options function with arguments', async () => {
+      const app = server();
+
+      let seenRequest;
+      let seenResponse;
+      let seenContext;
+      let seenParams;
+
+      app.use(
+        mount(
+          urlString(),
+          graphqlHTTP((req, res, ctx, params) => {
+            seenRequest = req;
+            seenResponse = res;
+            seenContext = ctx;
+            seenParams = params;
+            return { schema: TestSchema };
+          }),
+        ),
+      );
+
+      const response = await request(app.listen()).get(
+        urlString({
+          query: '{test}',
+        }),
+      );
+
+      expect(response.text).to.equal('{"data":{"test":"Hello World"}}');
+
+      expect(seenRequest).to.not.equal(null);
+      expect(seenResponse).to.not.equal(null);
+      expect(seenContext).to.not.equal(null);
+      expect(seenParams).to.deep.equal({
+        query: '{test}',
+        operationName: null,
+        variables: null,
+        raw: false,
+      });
+    });
+
     it('Catches errors thrown from options function', async () => {
       const app = server();
 
@@ -965,7 +1005,7 @@ describe('GraphQL-HTTP tests', () => {
       app.use(
         mount(
           urlString(),
-          graphqlHTTP((_req, ctx) => {
+          graphqlHTTP((_req, _res, ctx) => {
             expect(ctx.req.file?.originalname).to.equal('test.txt');
             return {
               schema: TestMutationSchema,
@@ -1168,10 +1208,10 @@ describe('GraphQL-HTTP tests', () => {
     app.use(
       mount(
         urlString(),
-        graphqlHTTP((reqest, response, context) => {
-          seenRequest = reqest;
-          seenResponse = response;
-          seenContext = context;
+        graphqlHTTP((req, res, ctx) => {
+          seenRequest = req;
+          seenResponse = res;
+          seenContext = ctx;
           return { schema: TestSchema };
         }),
       ),

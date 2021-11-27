@@ -48,6 +48,7 @@
   "scripts": {
     "test": "npm run lint && npm run testonly",
     "lint": "eslint .",
+    "check": "tsc --noEmit",
     "testonly": "mocha --exit src/**/__tests__/**/*.ts",
     "testonly:cover": "nyc npm run testonly",
     "prettier": "prettier --write --list-different .",

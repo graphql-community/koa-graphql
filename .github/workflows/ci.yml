@@ -1,7 +1,7 @@
 name: CI
 on: [push, pull_request]
 env:
-  NODE_VERSION_USED_FOR_DEVELOPMENT: 14
+  NODE_VERSION_USED_FOR_DEVELOPMENT: 16
 jobs:
   lint:
     name: Lint source files
@@ -28,8 +28,14 @@ jobs:
       - name: Lint ESLint
         run: npm run lint
 
+      - name: Lint TypeScript
+        run: npm run check
+
       - name: Lint Prettier
         run: npm run prettier:check
+
+      - name: Spellcheck
+        run: npm run check:spelling
 
   checkForCommonlyIgnoredFiles:
     name: Check for commonly ignored files
@@ -85,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node_version_to_setup: [10, 12, 14, 16]
+        node_version_to_setup: [10, 12, 14, 16, 17]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2

@@ -56,7 +56,7 @@ function safeSerialize(data: string | boolean | null | undefined): string {
     : 'undefined';
 }
 
-// Implemented as Babel transformation, see ../resources/load-statically-from-npm.js
+// Implemented as ts-node transformation, see ../resources/load-statically-from-npm.js
 declare function loadFileStaticallyFromNPM(npmPath: string): string;
 
 function getEditorThemeParams(

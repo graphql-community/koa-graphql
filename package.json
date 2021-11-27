@@ -53,6 +53,7 @@
     "start": "node -r ./resources/register.js examples/index.ts"
   },
   "dependencies": {
+    "@types/koa": "^2.13.4",
     "express-graphql": "0.12.0",
     "http-errors": "^1.7.3"
   },
@@ -60,7 +61,6 @@
     "@types/chai": "^4.2.21",
     "@types/co-body": "^6.1.0",
     "@types/http-errors": "^1.8.1",
-    "@types/koa": "^2.13.4",
     "@types/koa-mount": "^4.0.0",
     "@types/koa-session": "^5.10.4",
     "@types/mocha": "^9.0.0",

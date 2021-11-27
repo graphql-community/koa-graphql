@@ -48,7 +48,8 @@ rules:
   node/no-path-concat: error
   node/no-process-exit: off
   node/no-unpublished-bin: error
-  node/no-unpublished-import: error
+  ## TODO: https://github.com/mysticatea/eslint-plugin-node/issues/236#issuecomment-934875131
+  node/no-unpublished-import: [error, { allowModules: ['koa'] }]
   node/no-unpublished-require: error
   node/no-unsupported-features/es-builtins: error
   node/no-unsupported-features/es-syntax: error

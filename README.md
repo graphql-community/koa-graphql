@@ -38,11 +38,11 @@ app.use(
 app.listen(4000);
 ```
 
-With koa-router@7
+With `@koa/router`:
 
 ```js
 const Koa = require('koa');
-const Router = require('koa-router'); // koa-router@7.x
+const Router = require('@koa/router');
 const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
@@ -81,8 +81,6 @@ app.use(
   ),
 );
 ```
-
-> NOTE: Below is a copy from express-graphql's README. In this time I implemented almost same api, but it may be changed as time goes on.
 
 ## Options
 

@@ -1,5 +1,11 @@
-// @flow strict
-
 'use strict';
 
-require('@babel/register')();
+const {
+  transformLoadFileStaticallyFromNPM,
+} = require('./load-statically-from-npm');
+
+require('ts-node').register({
+  transformers: () => ({
+    after: [transformLoadFileStaticallyFromNPM],
+  }),
+});

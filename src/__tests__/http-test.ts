@@ -1,5 +1,5 @@
 import zlib from 'zlib';
-import { Readable } from 'stream';
+import type { Readable } from 'stream';
 
 import Koa from 'koa';
 import mount from 'koa-mount';
@@ -26,7 +26,7 @@ import {
   buildSchema,
 } from 'graphql';
 
-import graphqlHTTP from '../index';
+import { graphqlHTTP } from '../index';
 
 import multerWrapper from './helpers/koa-multer';
 

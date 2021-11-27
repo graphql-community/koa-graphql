@@ -1,54 +1,49 @@
-// @flow strict
-
 import type { FormattedExecutionResult } from 'graphql';
 
-type EditorThemeParam =
-  | {|
-      name: string,
-      url: string,
-    |}
-  | string;
+export interface GraphiQLData {
+  query?: string | null;
+  variables?: { readonly [name: string]: unknown } | null;
+  operationName?: string | null;
+  result?: FormattedExecutionResult;
+}
 
-type GraphiQLData = {|
-  query: ?string,
-  variables: ?{ [param: string]: mixed },
-  operationName: ?string,
-  result?: ?FormattedExecutionResult,
-  options: ?GraphiQLOptions,
-|};
-
-export type GraphiQLOptions = {|
+export interface GraphiQLOptions {
   /**
    * An optional GraphQL string to use when no query is provided and no stored
    * query exists from a previous session.  If undefined is provided, GraphiQL
    * will use its own default query.
    */
-  defaultQuery?: ?string,
+  defaultQuery?: string;
 
   /**
    * An optional boolean which enables the header editor when true.
    * Defaults to false.
    */
-  headerEditorEnabled?: boolean,
+  headerEditorEnabled?: boolean;
 
   /**
    * By passing an object you may change the theme of GraphiQL.
    */
-  editorTheme?: EditorThemeParam,
-|};
+  editorTheme?: EditorThemeParam;
+}
 
-type EditorTheme =
-  | {|
-      name: string,
-      link: string,
-    |}
-  | {||};
+type EditorThemeParam =
+  | {
+      name: string;
+      url: string;
+    }
+  | string;
+
+type EditorTheme = {
+  name: string;
+  link: string;
+};
 
 // Current latest version of codeMirror.
 const CODE_MIRROR_VERSION = '5.53.2';
 
 // Ensures string values are safe to be used within a <script> tag.
-function safeSerialize(data: string | boolean | null | void): string {
+function safeSerialize(data: string | boolean | null | undefined): string {
   return data != null
     ? JSON.stringify(data).replace(/\//g, '\\/')
     : 'undefined';
@@ -57,9 +52,11 @@ function safeSerialize(data: string | boolean | null | void): string {
 // Implemented as Babel transformation, see ../resources/load-statically-from-npm.js
 declare function loadFileStaticallyFromNPM(npmPath: string): string;
 
-function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
-  if (!editorTheme) {
-    return {};
+function getEditorThemeParams(
+  editorTheme: EditorThemeParam | undefined | null,
+): EditorTheme | undefined {
+  if (editorTheme == null) {
+    return;
   }
   if (typeof editorTheme === 'string') {
     return {
@@ -81,7 +78,11 @@ function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
   }
   throw Error(
     'invalid parameter "editorTheme": should be undefined/null, string or ' +
-      `{name: string, url: string} but provided is "${editorTheme}"`,
+      `{name: string, url: string} but provided is "${
+        typeof editorTheme === 'object'
+          ? JSON.stringify(editorTheme)
+          : editorTheme
+      }"`,
   );
 }
 
@@ -92,16 +93,19 @@ function getEditorThemeParams(editorTheme: EditorThemeParam): EditorTheme {
  * When shown, it will be pre-populated with the result of having executed the
  * requested query.
  */
-export function renderGraphiQL(data: GraphiQLData): string {
+export function renderGraphiQL(
+  data: GraphiQLData,
+  options?: GraphiQLOptions,
+): string {
   const queryString = data.query;
   const variablesString =
     data.variables != null ? JSON.stringify(data.variables, null, 2) : null;
   const resultString =
     data.result != null ? JSON.stringify(data.result, null, 2) : null;
   const operationName = data.operationName;
-  const defaultQuery = data.options?.defaultQuery;
-  const headerEditorEnabled = data.options?.headerEditorEnabled;
-  const editorTheme = getEditorThemeParams(data.options.editorTheme);
+  const defaultQuery = options?.defaultQuery;
+  const headerEditorEnabled = options?.headerEditorEnabled;
+  const editorTheme = getEditorThemeParams(options?.editorTheme);
 
   return `<!--
 The request to this GraphQL server provided the header "Accept: text/html"
@@ -131,7 +135,7 @@ add "&raw" to the end of the URL within a browser.
     /* graphiql/graphiql.css */
     ${loadFileStaticallyFromNPM('graphiql/graphiql.css')}
   </style>
-  ${editorTheme.link || ''}
+  ${editorTheme ? editorTheme.link : ''}
   <script>
     // promise-polyfill/dist/polyfill.min.js
     ${loadFileStaticallyFromNPM('promise-polyfill/dist/polyfill.min.js')}
@@ -233,7 +237,9 @@ add "&raw" to the end of the URL within a browser.
         onEditQuery: onEditQuery,
         onEditVariables: onEditVariables,
         onEditOperationName: onEditOperationName,
-        editorTheme: ${editorTheme.name && safeSerialize(editorTheme.name)},
+        editorTheme: ${safeSerialize(
+          editorTheme ? editorTheme.name : undefined,
+        )},
         query: ${safeSerialize(queryString)},
         response: ${safeSerialize(resultString)},
         variables: ${safeSerialize(variablesString)},

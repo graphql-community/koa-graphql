@@ -1,7 +1,7 @@
 import { promisify } from 'util';
 
 import multer from 'multer';
-import Koa from 'koa';
+import type Koa from 'koa';
 
 export default function multerWrapper(options?: multer.Options | undefined) {
   const upload = multer(options);

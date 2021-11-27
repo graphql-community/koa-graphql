@@ -428,7 +428,6 @@ customFormatErrorFn: (error, ctx) => ({
 
 ### Examples
 
-- [koa-graphql-relay-example](https://github.com/graphql-community/koa-graphql-relay-example)
 - [tests](https://github.com/graphql-community/koa-graphql/blob/main/src/__tests__/http-test.js)
 
 ### Other relevant projects

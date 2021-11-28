@@ -97,21 +97,21 @@ The `graphqlHTTP` function accepts the following options:
 
   - **`defaultQuery`**: An optional GraphQL string to use when no query
     is provided and no stored query exists from a previous session.
-    If undefined is provided, GraphiQL will use its own default query.
+    If `undefined` is provided, GraphiQL will use its own default query.
 
   - **`headerEditorEnabled`**: An optional boolean which enables the header editor when true.
-    Defaults to false.
+    Defaults to `false`.
 
   - **`shouldPersistHeaders`**
 
   - **`editorTheme`**: By passing an object you may change the theme of GraphiQL.
     Details are below in the [Custom GraphiQL themes](#custom-graphiql-themes) section.
 
-- **`rootValue`**: A value to pass as the `rootValue` to the `graphql()`
-  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L122).
+- **`rootValue`**: A value to pass as the `rootValue` to the `execute()`
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L129).
 
-- **`context`**: A value to pass as the `context` to the `graphql()`
-  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L123). If `context` is not provided, the
+- **`context`**: A value to pass as the `context` to the `execute()`
+  function from [`graphql-js/src/execute.js`](https://github.com/graphql/graphql-js/blob/main/src/execution/execute.js#L130). If `context` is not provided, the
   `ctx` object is passed as the context.
 
 - **`pretty`**: If `true`, any JSON response will be pretty-printed.
@@ -123,7 +123,7 @@ The `graphqlHTTP` function accepts the following options:
   of resources consumed. This may be an async function. The function is
   given one object as an argument: `{ document, variables, operationName, result, context }`.
 
-- **`validationRules`**: Optional additional validation rules queries must
+- **`validationRules`**: Optional additional validation rules that queries must
   satisfy in addition to those defined by the GraphQL spec.
 
 - **`customValidateFn`**: An optional function which will be used to validate
@@ -182,7 +182,7 @@ the parameters:
   named operations.
 
 - **`raw`**: If the `graphiql` option is enabled and the `raw` parameter is
-  provided raw JSON will always be returned instead of GraphiQL even when
+  provided, raw JSON will always be returned instead of GraphiQL even when
   loaded from a browser.
 
 GraphQL will first look for each parameter in the query string of a URL:
@@ -191,23 +191,23 @@ GraphQL will first look for each parameter in the query string of a URL:
 /graphql?query=query+getUser($id:ID){user(id:$id){name}}&variables={"id":"4"}
 ```
 
-If not found in the query-string, it will look in the POST request body.
+If not found in the query string, it will look in the POST request body.
 
 If a previous middleware has already parsed the POST body, the `request.body`
 value will be used. Use [`multer`][] or a similar middleware to add support
 for `multipart/form-data` content, which may be useful for GraphQL mutations
 involving uploading files. See an [example using multer](https://github.com/graphql-community/koa-graphql/blob/e1a98f3548203a3c41fedf3d4267846785480d28/src/__tests__/http-test.js#L664-L732).
 
-If the POST body has not yet been parsed, koa-graphql will interpret it
+If the POST body has not yet been parsed, `koa-graphql` will interpret it
 depending on the provided _Content-Type_ header.
 
 - **`application/json`**: the POST body will be parsed as a JSON
   object of parameters.
 
-- **`application/x-www-form-urlencoded`**: this POST body will be
+- **`application/x-www-form-urlencoded`**: the POST body will be
   parsed as a url-encoded string of key-value pairs.
 
-- **`application/graphql`**: The POST body will be parsed as GraphQL
+- **`application/graphql`**: the POST body will be parsed as GraphQL
   query string, which provides the `query` parameter.
 
 ## Combining with Other koa Middleware
@@ -279,9 +279,6 @@ const graphqlHTTP = require('koa-graphql');
 
 const app = new Koa();
 
-app.keys = ['some secret'];
-app.use(session(app));
-
 const extensions = ({
   document,
   variables,
@@ -314,7 +311,7 @@ for example:
 
 ```js
 {
-  "data": { ... }
+  "data": { ... },
   "extensions": {
     "runTime": 135
   }

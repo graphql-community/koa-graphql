@@ -34,6 +34,13 @@ export interface GraphiQLOptions {
   subscriptionEndpoint?: string;
 
   /**
+   * websocket client option for subscription, defaults to v0
+   * v0: subscriptions-transport-ws
+   * v1: graphql-ws
+   */
+  websocketClient?: string;
+
+  /**
    * By passing an object you may change the theme of GraphiQL.
    */
   editorTheme?: EditorThemeParam;
@@ -119,22 +126,41 @@ export function renderGraphiQL(
   const headerEditorEnabled = options?.headerEditorEnabled;
   const shouldPersistHeaders = options?.shouldPersistHeaders;
   const subscriptionEndpoint = options?.subscriptionEndpoint;
+  const websocketClient = options?.websocketClient ?? 'v0';
   const editorTheme = getEditorThemeParams(options?.editorTheme);
 
   let subscriptionScripts = '';
   if (subscriptionEndpoint != null) {
-    subscriptionScripts = `
-    <script>
+    if (websocketClient === 'v1') {
+      subscriptionScripts = `
+      <script>
+        ${loadFileStaticallyFromNPM('graphql-ws/umd/graphql-ws.js')}
+      </script>
+      <script>
       ${loadFileStaticallyFromNPM(
         'subscriptions-transport-ws/browser/client.js',
       )}
-    </script>
-    <script>
-      ${loadFileStaticallyFromNPM(
-        'graphiql-subscriptions-fetcher/browser/client.js',
-      )}
-    </script>
-    `;
+      </script>
+      `;
+    } else {
+      subscriptionScripts = `
+      <script>
+        ${loadFileStaticallyFromNPM(
+          'subscriptions-transport-ws/browser/client.js',
+        )}
+      </script>
+      <script>
+        ${loadFileStaticallyFromNPM(
+          'subscriptions-transport-ws/browser/client.js',
+        )}
+      </script>
+      <script>
+        ${loadFileStaticallyFromNPM(
+          'graphiql-subscriptions-fetcher/browser/client.js',
+        )}
+      </script>
+      `;
+    }
   }
 
   return `<!--
@@ -241,12 +267,21 @@ add "&raw" to the end of the URL within a browser.
     }
 
     function makeFetcher() {
-      if ('${typeof subscriptionEndpoint}' == 'string') {
-        let clientClass = window.SubscriptionsTransportWs.SubscriptionClient;
-        let client = new clientClass(${safeSerialize(subscriptionEndpoint)}, {
-           reconnect: true
-        });
-        return window.GraphiQLSubscriptionsFetcher.graphQLFetcher(client, graphQLFetcher);
+      if('${typeof subscriptionEndpoint}' == 'string') {
+        let client = null;
+        let url = window.location.href;
+        if('${typeof websocketClient}' == 'string' && '${websocketClient}' === 'v1') {
+          client = window.graphqlWs.createClient({url: ${safeSerialize(
+            subscriptionEndpoint,
+          )} });
+          return window.GraphiQL.createFetcher({url, wsClient: client});
+        } else {
+          let clientClass = window.SubscriptionsTransportWs.SubscriptionClient;
+          client = new clientClass(${safeSerialize(subscriptionEndpoint)}, {
+            reconnect: true
+          });
+          return window.GraphiQL.createFetcher({url, legacyClient: client});
+        }
       } else {
         return graphQLFetcher;
       }

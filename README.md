@@ -21,7 +21,7 @@ Mount `koa-graphql` as a route handler:
 ```js
 const Koa = require('koa');
 const mount = require('koa-mount');
-const graphqlHTTP = require('koa-graphql');
+const { graphqlHTTP } = require('koa-graphql');
 
 const app = new Koa();
 
@@ -43,7 +43,7 @@ With `@koa/router`:
 ```js
 const Koa = require('koa');
 const Router = require('@koa/router');
-const graphqlHTTP = require('koa-graphql');
+const { graphqlHTTP } = require('koa-graphql');
 
 const app = new Koa();
 const router = new Router();
@@ -65,7 +65,7 @@ For Koa 1, use [koa-convert](https://github.com/koajs/convert) to convert the mi
 const koa = require('koa');
 const mount = require('koa-mount'); // koa-mount@1.x
 const convert = require('koa-convert');
-const graphqlHTTP = require('koa-graphql');
+const { graphqlHTTP } = require('koa-graphql');
 
 const app = koa();
 
@@ -272,7 +272,7 @@ This example uses [`koa-session`][] to provide GraphQL with the currently logged
 const Koa = require('koa');
 const mount = require('koa-mount');
 const session = require('koa-session');
-const graphqlHTTP = require('koa-graphql');
+const { graphqlHTTP } = require('koa-graphql');
 
 const app = new Koa();
 app.keys = ['some secret'];
@@ -325,7 +325,7 @@ This example illustrates adding the amount of time consumed by running the
 provided query, which could perhaps be used by your development tools.
 
 ```js
-const graphqlHTTP = require('koa-graphql');
+const { graphqlHTTP } = require('koa-graphql');
 
 const app = new Koa();
 

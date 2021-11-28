@@ -82,6 +82,52 @@ app.use(
 );
 ```
 
+## Setup with Subscription Support
+
+```js
+const Koa = require('koa');
+const mount = require('koa-mount');
+const { graphqlHTTP } = require('koa-graphql');
+const typeDefs = require('./schema');
+const resolvers = require('./resolvers');
+const { makeExecutableSchema } = require('graphql-tools');
+const schema = makeExecutableSchema({
+  typeDefs: typeDefs,
+  resolvers: resolvers,
+});
+const { execute, subscribe } = require('graphql');
+const { createServer } = require('http');
+const { SubscriptionServer } = require('subscriptions-transport-ws');
+const PORT = 4000;
+const app = new Koa();
+app.use(
+  mount(
+    '/graphql',
+    graphqlHTTP({
+      schema: schema,
+      graphiql: {
+        subscriptionEndpoint: `ws://localhost:${PORT}/subscriptions`,
+      },
+    }),
+  ),
+);
+const ws = createServer(app.callback());
+ws.listen(PORT, () => {
+  // Set up the WebSocket for handling GraphQL subscriptions.
+  new SubscriptionServer(
+    {
+      execute,
+      subscribe,
+      schema,
+    },
+    {
+      server: ws,
+      path: '/subscriptions',
+    },
+  );
+});
+```
+
 ## Options
 
 The `graphqlHTTP` function accepts the following options:
@@ -101,6 +147,8 @@ The `graphqlHTTP` function accepts the following options:
 
   - **`headerEditorEnabled`**: An optional boolean which enables the header editor when true.
     Defaults to `false`.
+
+  - **`subscriptionEndpoint`**: An optional GraphQL string contains the WebSocket server url for subscription.
 
   - **`shouldPersistHeaders`**
 

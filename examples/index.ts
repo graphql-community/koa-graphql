@@ -1,6 +1,5 @@
 import Koa from 'koa';
 import mount from 'koa-mount';
-
 import { buildSchema } from 'graphql';
 
 import { graphqlHTTP } from '../src/index';

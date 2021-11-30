@@ -14,7 +14,13 @@ Port from [express-graphql](https://github.com/graphql/express-graphql).
 npm install --save koa-graphql
 ```
 
-## Usage
+### TypeScript
+
+This module includes a [TypeScript](https://www.typescriptlang.org/)
+declaration file to enable auto complete in compatible editors and type
+information for TypeScript projects.
+
+## Simple Setup
 
 Mount `koa-graphql` as a route handler:
 
@@ -38,6 +44,8 @@ app.use(
 app.listen(4000);
 ```
 
+## Setup with Koa Router
+
 With `@koa/router`:
 
 ```js
@@ -58,6 +66,8 @@ router.all(
 
 app.use(router.routes()).use(router.allowedMethods());
 ```
+
+## Setup with Koa v1
 
 For Koa 1, use [koa-convert](https://github.com/koajs/convert) to convert the middleware:
 
